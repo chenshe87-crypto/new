@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新概念英语 - 沉浸式学习平台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand" onclick="navigate('home')">
+                    <i class="fas fa-book-open"></i>
+                    <span>新概念英语</span>
+                </div>
+                <div class="nav-links">
+                    <a class="nav-link active" onclick="navigate('home')" data-page="home">
+                        <i class="fas fa-home"></i> 首页
+                    </a>
+                    <a class="nav-link" onclick="navigate('random')" data-page="random">
+                        <i class="fas fa-dice"></i> 随机挑战
+                    </a>
+                    <a class="nav-link" onclick="navigate('mistakes')" data-page="mistakes">
+                        <i class="fas fa-exclamation-circle"></i> 错题集
+                    </a>
+                    <a class="nav-link" onclick="navigate('history')" data-page="history">
+                        <i class="fas fa-history"></i> 学习记录
+                    </a>
+                </div>
+                <div class="nav-user" id="navUser">
+                    <span id="userName" class="user-name"></span>
+                    <button class="btn btn-secondary" id="logoutBtn" onclick="logout()" style="padding: 0.375rem 0.75rem; font-size: 0.875rem;">
+                        <i class="fas fa-sign-out-alt"></i> 退出
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <main id="main-content">
+            <div id="page-login" class="page">
+                <div class="auth-page">
+                    <div class="container">
+                        <div class="auth-container">
+                            <div class="auth-tabs">
+                                <button class="auth-tab active" onclick="switchAuthTab('login')">登录</button>
+                                <button class="auth-tab" onclick="switchAuthTab('register')">注册</button>
+                            </div>
+                            
+                            <div id="loginForm" class="auth-form">
+                                <h2 class="auth-title">欢迎回来</h2>
+                                <div class="form-group">
+                                    <label>用户名</label>
+                                    <input type="text" id="loginUsername" placeholder="请输入用户名">
+                                </div>
+                                <div class="form-group">
+                                    <label>密码</label>
+                                    <input type="password" id="loginPassword" placeholder="请输入密码">
+                                </div>
+                                <div class="form-error" id="loginError"></div>
+                                <button class="btn btn-primary" onclick="login()" style="width: 100%;">登录</button>
+                            </div>
+                            
+                            <div id="registerForm" class="auth-form hidden">
+                                <h2 class="auth-title">创建账号</h2>
+                                <div class="form-group">
+                                    <label>用户名</label>
+                                    <input type="text" id="registerUsername" placeholder="请输入用户名">
+                                </div>
+                                <div class="form-group">
+                                    <label>密码</label>
+                                    <input type="password" id="registerPassword" placeholder="请输入密码">
+                                </div>
+                                <div class="form-group">
+                                    <label>确认密码</label>
+                                    <input type="password" id="registerConfirmPassword" placeholder="请再次输入密码">
+                                </div>
+                                <div class="form-error" id="registerError"></div>
+                                <button class="btn btn-primary" onclick="register()" style="width: 100%;">注册</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-home" class="page">
+                <section class="hero">
+                    <div class="hero-content">
+                        <h1 class="hero-title">探索英语的无限可能</h1>
+                        <p class="hero-subtitle">新概念英语 · 沉浸式学习体验</p>
+                        <p class="hero-description">通过分级课程、翻译挑战和默写挑战，全面提升您的英语能力</p>
+                    </div>
+                </section>
+
+                <section class="courses-section">
+                    <div class="container">
+                        <h2 class="section-title">选择您的课程</h2>
+                        <div class="courses-grid" id="courses-grid"></div>
+                    </div>
+                </section>
+            </div>
+
+            <div id="page-course" class="page">
+                <div class="course-page">
+                    <div class="container">
+                        <button class="back-btn" onclick="navigate('home')">
+                            <i class="fas fa-arrow-left"></i> 返回首页
+                        </button>
+                        <h2 class="course-title" id="course-title"></h2>
+                        <div class="course-layout">
+                            <aside class="lesson-sidebar">
+                                <h3 class="sidebar-title">课文列表</h3>
+                                <div class="lesson-list" id="lesson-list"></div>
+                            </aside>
+                            <main class="lesson-content" id="lesson-detail">
+                                <div class="empty-state">
+                                    <i class="fas fa-hand-pointer"></i>
+                                    <p>请从左侧选择一篇课文开始学习</p>
+                                </div>
+                            </main>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-translation" class="page">
+        <div class="practice-page">
+            <div class="container">
+                <button class="back-btn" onclick="goBackFromPractice()">
+                    <i class="fas fa-arrow-left"></i> 返回课程
+                </button>
+                <h2 class="practice-title">翻译挑战</h2>
+                <div id="translation-sentences-container" class="translation-sentences-container"></div>
+                <div class="action-buttons" style="margin-top: 1.5rem;">
+                    <button class="btn btn-primary" onclick="checkAllTranslation()">
+                        <i class="fas fa-check"></i> 提交答案
+                    </button>
+                </div>
+                <div id="translation-result" class="result-section hidden"></div>
+            </div>
+        </div>
+    </div>
+
+            <div id="page-dictation" class="page">
+                <div class="practice-page">
+                    <div class="container">
+                        <button class="back-btn" onclick="goBackFromPractice()">
+                            <i class="fas fa-arrow-left"></i> 返回课程
+                        </button>
+                        <h2 class="practice-title">默写挑战</h2>
+                        <div id="dictation-container" class="dictation-sentences-container"></div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="checkAllDictation()">
+                                <i class="fas fa-check"></i> 提交全部答案
+                            </button>
+                        </div>
+                        <div id="dictation-result" class="result-section hidden"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-random" class="page">
+                <div class="random-page">
+                    <div class="container">
+                        <button class="back-btn" onclick="navigate('home')">
+                            <i class="fas fa-arrow-left"></i> 返回首页
+                        </button>
+                        <h2 class="practice-title">随机挑战</h2>
+                        <div id="random-setup" class="setup-container">
+                            <h3 class="setup-title">选择范围设置</h3>
+                            <div class="lesson-select-header">
+                                <div class="select-all-buttons">
+                                    <button class="btn btn-secondary" onclick="selectAllLessons()">
+                                        <i class="fas fa-check-square"></i> 全选
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="deselectAllLessons()">
+                                        <i class="fas fa-square"></i> 取消全选
+                                    </button>
+                                </div>
+                                <div class="range-select">
+                                    <span>范围选择:</span>
+                                    <input type="number" id="rangeStart" min="1" max="50" placeholder="a" style="width: 50px;">
+                                    <span>-</span>
+                                    <input type="number" id="rangeEnd" min="1" max="50" placeholder="z" style="width: 50px;">
+                                    <button class="btn btn-secondary" onclick="selectRangeLessons()">
+                                        <i class="fas fa-sliders-h"></i> 选择范围
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="lesson-select-grid" id="random-lesson-select"></div>
+                            <div class="setup-options">
+                                <label class="option-label">
+                                    <span>抽取句子数量：</span>
+                                    <select id="random-sentence-count">
+                                        <option value="5">5句</option>
+                                        <option value="10" selected>10句</option>
+                                        <option value="15">15句</option>
+                                        <option value="20">20句</option>
+                                    </select>
+                                </label>
+                                <label class="option-label">
+                                    <span>挑战类型：</span>
+                                    <select id="random-challenge-type">
+                                        <option value="dictation">默写挑战（中文→英文）</option>
+                                        <option value="translation">翻译挑战（英文→中文）</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="startRandomChallenge()">
+                                    <i class="fas fa-dice"></i> 开始挑战
+                                </button>
+                            </div>
+                        </div>
+                        <div id="random-challenge" class="hidden">
+                            <div id="random-question-container"></div>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="submitRandomChallenge()">
+                                    <i class="fas fa-check"></i> 提交答案
+                                </button>
+                            </div>
+                            <div id="random-result" class="result-section hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-mistakes" class="page">
+                <div class="mistakes-page">
+                    <div class="container">
+                        <button class="back-btn" onclick="navigate('home')">
+                            <i class="fas fa-arrow-left"></i> 返回首页
+                        </button>
+                        <h2 class="practice-title">错题集</h2>
+                        <div id="mistakes-list" class="mistakes-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-history" class="page">
+                <div class="history-page">
+                    <div class="container">
+                        <h2 class="history-title">学习记录</h2>
+                        <div id="history-list" class="history-list"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
