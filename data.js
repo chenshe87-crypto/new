@@ -4825,8 +4825,9 @@ function addMistake(mistake) {
         m.chinese === mistake.chinese
     );
     if (!exists) {
-        mistake.id = Date.now().toString();
+        mistake.id = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9);
         mistake.addedAt = new Date().toISOString();
+        mistake.successCount = 0;
         mistakes.unshift(mistake);
         saveUserData();
     }
@@ -4839,6 +4840,11 @@ function removeMistake(mistakeId) {
 
 function getMistakes() {
     return mistakes;
+}
+
+function saveMistakes(newMistakes) {
+    mistakes = newMistakes;
+    saveUserData();
 }
 
 loadUserData();

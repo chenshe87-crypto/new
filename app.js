@@ -3,6 +3,12 @@ let currentLessonId = null;
 let lastPage = 'home';
 let selectedLessons = [];
 let randomChallengeQuestions = [];
+let practiceSource = null;
+
+function saveMistakes(newMistakes) {
+    mistakes = newMistakes;
+    saveUserData();
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     checkLogin();
@@ -22,6 +28,7 @@ function checkLogin() {
 function updateNavUser() {
     const navUser = document.getElementById('navUser');
     const userName = document.getElementById('userName');
+    if (!navUser || !userName) return;
     if (currentUser) {
         navUser.style.display = 'flex';
         userName.textContent = currentUser.username;
@@ -106,10 +113,20 @@ function logout() {
     navigate('login');
 }
 
+let pageHistory = [];
+
 function navigate(page, data = null) {
     if (page !== 'login' && !currentUser) {
         navigate('login');
         return;
+    }
+    
+    const currentPage = document.querySelector('.page.active');
+    if (currentPage) {
+        pageHistory.push(currentPage.id);
+        if (pageHistory.length > 20) {
+            pageHistory.shift();
+        }
     }
     
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -125,6 +142,7 @@ function navigate(page, data = null) {
 
     const targetPage = document.getElementById('page-' + page);
     if (targetPage) {
+        targetPage.classList.remove('hidden');
         targetPage.classList.add('active');
     }
 
@@ -139,12 +157,14 @@ function navigate(page, data = null) {
             }
             break;
         case 'translation':
+            practiceSource = 'course';
             if (data && data.lessonId) {
                 currentLessonId = data.lessonId;
                 initTranslationPage(data.lessonId);
             }
             break;
         case 'dictation':
+            practiceSource = 'course';
             if (data && data.lessonId) {
                 currentLessonId = data.lessonId;
                 initDictationPage(data.lessonId);
@@ -156,6 +176,9 @@ function navigate(page, data = null) {
         case 'mistakes':
             initMistakesPage();
             break;
+        case 'mistakes-challenge':
+            initMistakesChallengePage();
+            break;
         case 'history':
             initHistoryPage();
             break;
@@ -164,6 +187,34 @@ function navigate(page, data = null) {
     if (page !== 'login') {
         lastPage = page;
     }
+}
+
+function goBack() {
+    const currentPage = document.querySelector('.page.active');
+    if (!currentPage) return;
+    
+    const pageId = currentPage.id;
+    
+    if (pageId === 'page-translation' || pageId === 'page-dictation') {
+        if (practiceSource === 'random') {
+            navigate('random');
+        } else {
+            navigate('course', { bookId: currentBookId });
+        }
+        return;
+    }
+    
+    const pageParent = {
+        'page-random-challenge': 'random',
+        'page-mistakes-challenge': 'mistakes',
+        'page-course': 'home',
+        'page-random': 'home',
+        'page-mistakes': 'home',
+        'page-history': 'home'
+    };
+    
+    const parent = pageParent[pageId];
+    navigate(parent || 'home');
 }
 
 function goBackFromPractice() {
@@ -215,7 +266,7 @@ function initCoursePage(bookId) {
     for (let i = 1; i <= book.lessons; i++) {
         const lesson = bookLessons.find(l => l.lessonNumber === i);
         const item = document.createElement('div');
-        item.className = 'lesson-item';
+        item.className = 'lesson-item ' + (i % 2 === 1 ? 'lesson-odd' : 'lesson-even');
         if (lesson) {
             item.textContent = 'Lesson ' + i + ': ' + lesson.title;
             item.onclick = () => showLessonDetail(lesson.id);
@@ -440,6 +491,39 @@ function initDictationPage(lessonId) {
     document.getElementById('dictation-result').classList.add('hidden');
 }
 
+function removeIgnoredPunctuation(str) {
+    return str.replace(/[^a-zA-Z0-9\s']/g, '').trim();
+}
+
+const CONTRACTION_MAP = {
+    "here's": "here is", "there's": "there is", "it's": "it is",
+    "that's": "that is", "what's": "what is", "he's": "he is",
+    "she's": "she is", "who's": "who is", "where's": "where is",
+    "how's": "how is", "i'm": "i am", "you're": "you are",
+    "we're": "we are", "they're": "they are", "isn't": "is not",
+    "aren't": "are not", "don't": "do not", "doesn't": "does not",
+    "can't": "can not", "won't": "will not", "didn't": "did not",
+    "wasn't": "was not", "weren't": "were not", "haven't": "have not",
+    "hasn't": "has not", "hadn't": "had not", "couldn't": "could not",
+    "wouldn't": "would not", "shouldn't": "should not", "mustn't": "must not",
+    "let's": "let us", "i'll": "i will", "you'll": "you will",
+    "he'll": "he will", "she'll": "she will", "we'll": "we will",
+    "they'll": "they will", "i'd": "i would", "i've": "i have",
+    "you've": "you have", "we've": "we have", "they've": "they have"
+};
+
+const CONTRACTION_KEYS_SORTED = Object.keys(CONTRACTION_MAP).sort((a, b) => b.length - a.length);
+const CONTRACTION_REGEX = new RegExp('\\b(' + CONTRACTION_KEYS_SORTED.join('|') + ')\\b', 'g');
+
+function normalizeText(str) {
+    let text = removeIgnoredPunctuation(str).toLowerCase();
+    return text.replace(CONTRACTION_REGEX, match => CONTRACTION_MAP[match]);
+}
+
+function wordsMatch(str1, str2) {
+    return normalizeText(str1) === normalizeText(str2);
+}
+
 function checkAllDictation() {
     const lesson = lessons.find(l => l.id === currentLessonId);
     if (!lesson) return;
@@ -453,7 +537,7 @@ function checkAllDictation() {
     for (let i = 0; i < chineseTexts.length; i++) {
         const userAnswer = document.getElementById('dictation-' + i).value.trim();
         const correctAnswer = englishTexts[i];
-        const isCorrect = userAnswer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
+        const isCorrect = wordsMatch(userAnswer, correctAnswer);
         
         if (!isCorrect) {
             addMistake({
@@ -506,9 +590,10 @@ function showDictationResult(dictationAnswers, correctCount, totalCount, score) 
                 item.appendChild(userDiv);
             }
             
+            // 无论用户是否答题，都显示正确答案
             const correctDiv = document.createElement('div');
             correctDiv.className = 'dictation-correct';
-            correctDiv.innerHTML = '<i class="fas fa-lightbulb"></i> 正确答案：' + highlightDifferences(answer.userAnswer, answer.correctAnswer);
+            correctDiv.innerHTML = '<i class="fas fa-lightbulb"></i> 正确答案：' + highlightCorrectAnswer(answer.userAnswer, answer.correctAnswer);
             item.appendChild(correctDiv);
         }
     });
@@ -533,30 +618,44 @@ function showDictationResult(dictationAnswers, correctCount, totalCount, score) 
             '<div style="margin-top: 1rem; font-size: 0.95rem; color: #64748b;">' +
                 '正确: ' + correctCount + ' / ' + totalCount + ' 句' +
             '</div>' +
+            '<div style="margin-top: 1.5rem;">' +
+                '<button class="btn btn-primary" onclick="initDictationPage(\'' + currentLessonId + '\')">' +
+                    '<i class="fas fa-redo"></i> 再来一次' +
+                '</button>' +
+            '</div>' +
         '</div>';
 }
 
-function highlightDifferences(userInput, correctAnswer, isEnglish = true) {
-    const userWords = userInput.toLowerCase().split(/\s+/);
-    const correctWords = correctAnswer.toLowerCase().split(/\s+/);
-    const correctWordsOriginal = correctAnswer.split(/\s+/);
+function expandWords(text) {
+    const cleaned = removeIgnoredPunctuation(text).toLowerCase();
+    const words = cleaned.split(/\s+/);
+    const expanded = [];
+    const originalIndex = [];
     
-    if (isEnglish) {
-        let result = [];
-        const userWordsOriginal = userInput.split(/\s+/);
-        for (let i = 0; i < userWordsOriginal.length; i++) {
-            if (i < correctWords.length && userWords[i] === correctWords[i]) {
-                result.push(userWordsOriginal[i]);
-            } else {
-                result.push('<span class="highlight-incorrect">' + userWordsOriginal[i] + '</span>');
-            }
+    for (let i = 0; i < words.length; i++) {
+        const parts = (CONTRACTION_MAP[words[i]] || words[i]).split(/\s+/);
+        for (let j = 0; j < parts.length; j++) {
+            expanded.push(parts[j]);
+            originalIndex.push(i);
         }
-        return result.join(' ');
-    } else {
+    }
+    
+    return { expanded, originalIndex, originalWords: text.trim().split(/\s+/) };
+}
+
+function highlightDifferences(userInput, correctAnswer, isEnglish = true) {
+    if (!userInput || !correctAnswer) return correctAnswer || '';
+    
+    if (wordsMatch(userInput, correctAnswer)) {
+        return correctAnswer;
+    }
+    
+    if (!isEnglish) {
+        const correctWordsOriginal = correctAnswer.split(/\s+/);
         let result = [];
-        const userWordsOriginal = userInput.split('');
+        const userChars = userInput.split('');
         for (let i = 0; i < correctWordsOriginal.length; i++) {
-            if (i < userWordsOriginal.length && userWordsOriginal[i] === correctWordsOriginal[i]) {
+            if (i < userChars.length && userChars[i] === correctWordsOriginal[i]) {
                 result.push(correctWordsOriginal[i]);
             } else {
                 result.push('<span class="highlight-correct">' + correctWordsOriginal[i] + '</span>');
@@ -564,6 +663,68 @@ function highlightDifferences(userInput, correctAnswer, isEnglish = true) {
         }
         return result.join('');
     }
+    
+    const userExp = expandWords(userInput);
+    const corrExp = expandWords(correctAnswer);
+    
+    const userWrong = new Array(userExp.originalWords.length).fill(false);
+    const maxLen = Math.min(userExp.expanded.length, corrExp.expanded.length);
+    
+    for (let i = 0; i < maxLen; i++) {
+        if (userExp.expanded[i] !== corrExp.expanded[i]) {
+            userWrong[userExp.originalIndex[i]] = true;
+        }
+    }
+    if (userExp.expanded.length > maxLen) {
+        for (let i = maxLen; i < userExp.expanded.length; i++) {
+            userWrong[userExp.originalIndex[i]] = true;
+        }
+    }
+    
+    let result = [];
+    for (let i = 0; i < userExp.originalWords.length; i++) {
+        if (userWrong[i]) {
+            result.push('<span class="highlight-incorrect">' + userExp.originalWords[i] + '</span>');
+        } else {
+            result.push(userExp.originalWords[i]);
+        }
+    }
+    return result.join(' ');
+}
+
+function highlightCorrectAnswer(userInput, correctAnswer) {
+    if (!userInput || !correctAnswer) return correctAnswer || '';
+    
+    if (wordsMatch(userInput, correctAnswer)) {
+        return correctAnswer;
+    }
+    
+    const userExp = expandWords(userInput);
+    const corrExp = expandWords(correctAnswer);
+    
+    const corrWrong = new Array(corrExp.originalWords.length).fill(false);
+    const maxLen = Math.min(userExp.expanded.length, corrExp.expanded.length);
+    
+    for (let i = 0; i < maxLen; i++) {
+        if (userExp.expanded[i] !== corrExp.expanded[i]) {
+            corrWrong[corrExp.originalIndex[i]] = true;
+        }
+    }
+    if (corrExp.expanded.length > maxLen) {
+        for (let i = maxLen; i < corrExp.expanded.length; i++) {
+            corrWrong[corrExp.originalIndex[i]] = true;
+        }
+    }
+    
+    let result = [];
+    for (let i = 0; i < corrExp.originalWords.length; i++) {
+        if (corrWrong[i]) {
+            result.push('<span class="highlight-correct-word">' + corrExp.originalWords[i] + '</span>');
+        } else {
+            result.push(corrExp.originalWords[i]);
+        }
+    }
+    return result.join(' ');
 }
 
 function initRandomPage() {
@@ -573,11 +734,15 @@ function initRandomPage() {
     const book = books[0];
     const bookLessons = lessons.filter(l => l.bookId === book.id);
     
+    const savedSelection = JSON.parse(localStorage.getItem('randomLessonSelection') || 'null');
+    const defaultChecked = savedSelection ? savedSelection : bookLessons.map(l => l.id);
+    
     bookLessons.forEach(lesson => {
+        const isChecked = defaultChecked.includes(lesson.id);
         const item = document.createElement('div');
         item.className = 'lesson-select-item';
         item.dataset.lessonId = lesson.id;
-        item.innerHTML = '<input type="checkbox" id="select-' + lesson.id + '" checked>' +
+        item.innerHTML = '<input type="checkbox" id="select-' + lesson.id + '"' + (isChecked ? ' checked' : '') + '>' +
             '<label for="select-' + lesson.id + '">Lesson ' + lesson.lessonNumber + ': ' + lesson.title + '</label>';
         item.onclick = (e) => {
             if (e.target.tagName !== 'INPUT') {
@@ -601,6 +766,18 @@ function selectAllLessons() {
 function deselectAllLessons() {
     const checkboxes = document.querySelectorAll('#random-lesson-select input[type="checkbox"]');
     checkboxes.forEach(cb => cb.checked = false);
+}
+
+function setSentenceCount(count) {
+    const buttons = document.querySelectorAll('.sentence-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    const activeBtn = Array.from(buttons).find(btn => btn.getAttribute('onclick').includes('setSentenceCount(' + count + ')'));
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+    }
+    
+    document.getElementById('random-sentence-count').value = count;
 }
 
 function selectRangeLessons() {
@@ -638,6 +815,66 @@ function selectRangeLessons() {
     });
 }
 
+function startQuickChallenge(type) {
+    const book = books[0];
+    
+    const checkboxes = document.querySelectorAll('#random-lesson-select input[type="checkbox"]:checked');
+    let selectedLessonIds = Array.from(checkboxes)
+        .map(cb => cb.id.substring(7))
+        .filter(id => id.length > 0);
+    
+    if (selectedLessonIds.length === 0) {
+        const bookLessons = lessons.filter(l => l.bookId === book.id);
+        const shuffled = [...bookLessons].sort(() => Math.random() - 0.5);
+        selectedLessonIds = shuffled.slice(0, Math.min(5, shuffled.length)).map(l => l.id);
+    }
+    
+    localStorage.setItem('randomLessonSelection', JSON.stringify(selectedLessonIds));
+    
+    const selectedLessons = lessons.filter(l => selectedLessonIds.includes(l.id));
+    
+    if (selectedLessons.length === 0) {
+        alert('暂无课程数据！');
+        return;
+    }
+    
+    const sentenceCount = parseInt(document.getElementById('random-sentence-count').value);
+    
+    let allSentences = [];
+    const seenSentences = new Set();
+    selectedLessons.forEach(lesson => {
+        const chineseTexts = Array.isArray(lesson.chineseText) ? lesson.chineseText : [lesson.chineseText];
+        const englishTexts = Array.isArray(lesson.englishText) ? lesson.englishText : [lesson.englishText];
+        chineseTexts.forEach((chinese, index) => {
+            const key = chinese.trim();
+            if (!seenSentences.has(key)) {
+                seenSentences.add(key);
+                allSentences.push({
+                    lessonId: lesson.id,
+                    lessonNumber: lesson.lessonNumber,
+                    lessonTitle: lesson.title,
+                    chinese: chinese,
+                    english: englishTexts[index]
+                });
+            }
+        });
+    });
+    
+    shuffleArray(allSentences);
+    randomChallengeQuestions = allSentences.slice(0, Math.min(sentenceCount, allSentences.length));
+    
+    const challengeTypeSelect = document.getElementById('random-challenge-type');
+    if (challengeTypeSelect) {
+        challengeTypeSelect.value = type;
+    }
+    
+    document.getElementById('random-setup').classList.add('hidden');
+    document.getElementById('random-challenge').classList.remove('hidden');
+    
+    practiceSource = 'random';
+    renderRandomChallenge(type);
+}
+
 function startRandomChallenge() {
     const checkboxes = document.querySelectorAll('#random-lesson-select input[type="checkbox"]:checked');
     if (checkboxes.length === 0) {
@@ -649,20 +886,27 @@ function startRandomChallenge() {
     const sentenceCount = parseInt(document.getElementById('random-sentence-count').value);
     const challengeType = document.getElementById('random-challenge-type').value;
     
+    localStorage.setItem('randomLessonSelection', JSON.stringify(selectedLessonIds));
+    
     let allSentences = [];
+    const seenSentences = new Set();
     selectedLessonIds.forEach(lessonId => {
         const lesson = lessons.find(l => l.id === lessonId);
         if (lesson) {
             const chineseTexts = Array.isArray(lesson.chineseText) ? lesson.chineseText : [lesson.chineseText];
             const englishTexts = Array.isArray(lesson.englishText) ? lesson.englishText : [lesson.englishText];
             chineseTexts.forEach((chinese, index) => {
-                allSentences.push({
-                    lessonId: lesson.id,
-                    lessonNumber: lesson.lessonNumber,
-                    lessonTitle: lesson.title,
-                    chinese: chinese,
-                    english: englishTexts[index]
-                });
+                const key = chinese.trim();
+                if (!seenSentences.has(key)) {
+                    seenSentences.add(key);
+                    allSentences.push({
+                        lessonId: lesson.id,
+                        lessonNumber: lesson.lessonNumber,
+                        lessonTitle: lesson.title,
+                        chinese: chinese,
+                        english: englishTexts[index]
+                    });
+                }
             });
         }
     });
@@ -673,6 +917,7 @@ function startRandomChallenge() {
     document.getElementById('random-setup').classList.add('hidden');
     document.getElementById('random-challenge').classList.remove('hidden');
     
+    practiceSource = 'random';
     renderRandomChallenge(challengeType);
 }
 
@@ -715,7 +960,8 @@ function renderRandomChallenge(type) {
 }
 
 function submitRandomChallenge() {
-    const challengeType = document.getElementById('random-challenge-type').value;
+    const challengeTypeSelect = document.getElementById('random-challenge-type');
+    const challengeType = challengeTypeSelect ? challengeTypeSelect.value : 'dictation';
     const container = document.getElementById('random-question-container');
     
     if (challengeType === 'translation') {
@@ -753,7 +999,7 @@ function submitRandomChallenge() {
     randomChallengeQuestions.forEach((q, index) => {
         const userAnswer = document.getElementById('random-' + index).value.trim();
         const correctAnswer = q.english;
-        const isCorrect = userAnswer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
+        const isCorrect = wordsMatch(userAnswer, correctAnswer);
         
         if (!isCorrect) {
             addMistake({
@@ -785,9 +1031,18 @@ function submitRandomChallenge() {
             input.classList.add('correct');
         } else {
             input.classList.add('incorrect');
+            
+            if (result.userAnswer) {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'dictation-user';
+                userDiv.innerHTML = '<i class="fas fa-user"></i> 您的答案：' + highlightDifferences(result.userAnswer, result.correctAnswer, true);
+                item.appendChild(userDiv);
+            }
+            
+            // 无论用户是否答题，都显示正确答案
             const correctDiv = document.createElement('div');
             correctDiv.className = 'dictation-correct';
-            correctDiv.innerHTML = '<i class="fas fa-lightbulb"></i> 正确答案：' + highlightDifferences(result.userAnswer, result.correctAnswer, true);
+            correctDiv.innerHTML = '<i class="fas fa-lightbulb"></i> 正确答案：' + highlightCorrectAnswer(result.userAnswer, result.correctAnswer);
             item.appendChild(correctDiv);
         }
     });
@@ -862,10 +1117,40 @@ function calculateSimilarity(str1, str2) {
 
 function initMistakesPage() {
     const mistakesList = document.getElementById('mistakes-list');
-    const mistakes = getMistakes();
+    let mistakes = getMistakes();
+    
+    const uniqueMistakes = [];
+    const seenKeys = new Set();
+    
+    mistakes.forEach(mistake => {
+        const key = mistake.lessonId + '|' + mistake.chinese + '|' + mistake.correctAnswer;
+        if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            uniqueMistakes.push(mistake);
+        }
+    });
+    
+    if (uniqueMistakes.length < mistakes.length) {
+        saveMistakes(uniqueMistakes);
+    }
+    mistakes = uniqueMistakes;
+    
+    const pendingMasterCount = mistakes.filter(m => m.successCount === 1).length;
     
     if (mistakes.length === 0) {
         mistakesList.innerHTML = 
+            '<div class="mistakes-stats" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.2); padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 1.5rem;">' +
+                '<div style="display: flex; gap: 2rem; flex-wrap: wrap;">' +
+                    '<div style="text-align: center; min-width: 80px;">' +
+                    '<div style="font-size: 2rem; font-weight: bold; color: var(--primary-dark);">0</div>' +
+                    '<div style="font-size: 0.85rem; color: var(--text-light);">错题总数</div>' +
+                '</div>' +
+                '<div style="text-align: center; min-width: 80px;">' +
+                    '<div style="font-size: 2rem; font-weight: bold; color: #f59e0b;">0</div>' +
+                    '<div style="font-size: 0.85rem; color: var(--text-light);">即将掌握</div>' +
+                '</div>' +
+                '</div>' +
+            '</div>' +
             '<div class="empty-history">' +
                 '<i class="fas fa-check-circle"></i>' +
                 '<p>暂无错题记录，继续加油！</p>' +
@@ -873,45 +1158,190 @@ function initMistakesPage() {
         return;
     }
     
-    mistakesList.innerHTML = mistakes.map(mistake => {
-        const lesson = lessons.find(l => l.id === mistake.lessonId);
-        const date = new Date(mistake.addedAt);
-        const dateStr = date.toLocaleDateString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
-        
-        return '<div class="mistake-item">' +
-            '<div class="mistake-header">' +
-                '<div class="mistake-lesson">' + (lesson ? 'Lesson ' + lesson.lessonNumber : '随机练习') + '</div>' +
-                '<div class="mistake-date">' + dateStr + '</div>' +
-                '<button class="btn-delete" onclick="deleteMistake(\'' + mistake.id + '\')">' +
-                    '<i class="fas fa-trash"></i>' +
-                '</button>' +
+    mistakesList.innerHTML = 
+        '<div class="mistakes-stats" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05)); border: 1px solid rgba(59, 130, 246, 0.2); padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 1.5rem;">' +
+            '<div style="display: flex; gap: 2rem; flex-wrap: wrap;">' +
+                '<div style="text-align: center; min-width: 80px;">' +
+                    '<div style="font-size: 2rem; font-weight: bold; color: var(--primary-dark);">' + mistakes.length + '</div>' +
+                '<div style="font-size: 0.85rem; color: var(--text-light);">错题总数</div>' +
             '</div>' +
-            '<div class="mistake-content">' +
-                '<div class="mistake-row">' +
-                    '<span class="mistake-label">中文：</span>' +
-                    '<span class="mistake-text">' + mistake.chinese + '</span>' +
-                '</div>' +
-                '<div class="mistake-row">' +
-                    '<span class="mistake-label">您的答案：</span>' +
-                    '<span class="mistake-text mistake-incorrect">' + mistake.userAnswer + '</span>' +
-                '</div>' +
-                '<div class="mistake-row">' +
-                    '<span class="mistake-label">正确答案：</span>' +
-                    '<span class="mistake-text mistake-correct">' + mistake.correctAnswer + '</span>' +
-                '</div>' +
+            '<div style="text-align: center; min-width: 80px;">' +
+                '<div style="font-size: 2rem; font-weight: bold; color: #f59e0b;">' + pendingMasterCount + '</div>' +
+                '<div style="font-size: 0.85rem; color: var(--text-light);">即将掌握</div>' +
             '</div>' +
-        '</div>';
-    }).join('');
+            '</div>' +
+        '</div>' +
+        mistakes.map(mistake => {
+            const lesson = lessons.find(l => l.id === mistake.lessonId);
+            const date = new Date(mistake.addedAt);
+            const dateStr = date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            
+            return '<div class="mistake-item">' +
+                '<div class="mistake-header">' +
+                    '<div class="mistake-lesson">' + (lesson ? 'Lesson ' + lesson.lessonNumber : '随机练习') + '</div>' +
+                    '<div class="mistake-date">' + dateStr + '</div>' +
+                    '<button class="btn-delete" onclick="deleteMistake(\'' + mistake.id + '\')">' +
+                        '<i class="fas fa-trash"></i>' +
+                    '</button>' +
+                '</div>' +
+                '<div class="mistake-content">' +
+                    '<div class="mistake-row">' +
+                        '<span class="mistake-label">中文：</span>' +
+                        '<span class="mistake-text">' + mistake.chinese + '</span>' +
+                    '</div>' +
+                    '<div class="mistake-row">' +
+                        '<span class="mistake-label">您的答案：</span>' +
+                        '<span class="mistake-text mistake-incorrect">' + mistake.userAnswer + '</span>' +
+                    '</div>' +
+                    '<div class="mistake-row">' +
+                        '<span class="mistake-label">正确答案：</span>' +
+                        '<span class="mistake-text mistake-correct">' + mistake.correctAnswer + '</span>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        }).join('');
 }
 
 function deleteMistake(mistakeId) {
-    if (confirm('确定要删除这条错题记录吗？')) {
-        removeMistake(mistakeId);
-        initMistakesPage();
+    removeMistake(mistakeId);
+    initMistakesPage();
+}
+
+let mistakesChallengeQuestions = [];
+let mistakesChallengeCorrectIds = [];
+
+function startMistakesChallenge() {
+    const allMistakes = getMistakes();
+    if (allMistakes.length === 0) {
+        alert('暂无错题记录，继续加油！');
+        return;
+    }
+    
+    const shuffled = [...allMistakes].sort(() => Math.random() - 0.5);
+    mistakesChallengeQuestions = shuffled.slice(0, Math.min(5, shuffled.length));
+    mistakesChallengeCorrectIds = [];
+    
+    navigate('mistakes-challenge');
+}
+
+function initMistakesChallengePage() {
+    const container = document.getElementById('mistakes-challenge-container');
+    if (!container) {
+        console.error('Container mistakes-challenge-container not found');
+        return;
+    }
+    
+    const resultDiv = document.getElementById('mistakes-challenge-result');
+    
+    if (resultDiv) {
+        resultDiv.classList.add('hidden');
+    }
+    
+    container.innerHTML = mistakesChallengeQuestions.map((mistake, index) => {
+        return '<div class="dictation-sentence-item" data-index="' + index + '">' +
+            '<div class="dictation-sentence-header">' +
+                '<span class="sentence-number">第 ' + (index + 1) + ' 题</span>' +
+            '</div>' +
+            '<div class="dictation-chinese-text">' + mistake.chinese + '</div>' +
+            '<div class="dictation-input-wrapper">' +
+                '<input type="text" class="dictation-input" id="mistakes-challenge-' + index + '" placeholder="请输入英文翻译">' +
+            '</div>' +
+        '</div>';
+    }).join('') +
+    '<div class="action-buttons" style="margin-top: 1.5rem;">' +
+        '<button class="btn btn-primary" onclick="submitMistakesChallenge()">' +
+            '<i class="fas fa-check"></i> 提交答案' +
+        '</button>' +
+    '</div>';
+}
+
+function submitMistakesChallenge() {
+    const container = document.getElementById('mistakes-challenge-container');
+    let correctCount = 0;
+    const results = [];
+    
+    mistakesChallengeQuestions.forEach((mistake, index) => {
+        const userAnswer = document.getElementById('mistakes-challenge-' + index).value.trim();
+        const isCorrect = wordsMatch(userAnswer, mistake.correctAnswer);
+        
+        if (isCorrect) {
+            correctCount++;
+            mistakesChallengeCorrectIds.push(mistake.id);
+        }
+        
+        results.push({
+            userAnswer,
+            correctAnswer: mistake.correctAnswer,
+            isCorrect,
+            index,
+            mistakeId: mistake.id,
+            mistake: mistake
+        });
+    });
+    
+    results.forEach(result => {
+        const item = container.querySelector('[data-index="' + result.index + '"]');
+        const input = item.querySelector('.dictation-input');
+        input.disabled = true;
+        
+        if (result.isCorrect) {
+            input.classList.add('correct');
+        } else {
+            input.classList.add('incorrect');
+            
+            if (result.userAnswer) {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'dictation-user';
+                userDiv.innerHTML = '<i class="fas fa-user"></i> 您的答案：' + highlightDifferences(result.userAnswer, result.correctAnswer, true);
+                item.appendChild(userDiv);
+            }
+            
+            const correctDiv = document.createElement('div');
+            correctDiv.className = 'dictation-correct';
+            correctDiv.innerHTML = '<i class="fas fa-lightbulb"></i> 正确答案：' + highlightCorrectAnswer(result.userAnswer, result.correctAnswer);
+            item.appendChild(correctDiv);
+        }
+    });
+    
+    const score = Math.round((correctCount / mistakesChallengeQuestions.length) * 100);
+    document.getElementById('mistakes-challenge-score').textContent = score + '分';
+    
+    let label = '继续努力';
+    if (score >= 80) {
+        label = '优秀！';
+    } else if (score >= 60) {
+        label = '不错！';
+    }
+    document.getElementById('mistakes-challenge-label').textContent = label;
+    
+    updateMistakesSuccessCount(mistakesChallengeCorrectIds);
+    
+    document.getElementById('mistakes-challenge-result').classList.remove('hidden');
+}
+
+function updateMistakesSuccessCount(mistakeIds) {
+    let mistakes = getMistakes();
+    let removedCount = 0;
+    
+    mistakes = mistakes.filter(mistake => {
+        if (mistakeIds.includes(mistake.id)) {
+            mistake.successCount = (mistake.successCount || 0) + 1;
+            if (mistake.successCount >= 2) {
+                removedCount++;
+                return false;
+            }
+        }
+        return true;
+    });
+    
+    saveMistakes(mistakes);
+    
+    if (removedCount > 0) {
+        alert('太棒了！' + removedCount + ' 道错题已掌握，已从错题集中移除！');
     }
 }
 

@@ -376,6 +376,14 @@ body {
     color: white;
 }
 
+.lesson-odd {
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.lesson-even {
+    background: rgba(100, 116, 139, 0.08);
+}
+
 .lesson-content {
     background: var(--bg-white);
     border-radius: 1rem;
@@ -772,11 +780,100 @@ body {
     padding: 3rem 0;
 }
 
-.setup-container {
+#random-setup {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.setup-section {
     background: var(--bg-white);
     border-radius: 1rem;
-    padding: 2rem;
+    padding: 1.5rem;
     box-shadow: var(--shadow);
+}
+
+.setup-options-card {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(14, 165, 233, 0.05) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.lesson-select-card {
+    background: linear-gradient(135deg, rgba(100, 116, 139, 0.05) 0%, rgba(148, 163, 184, 0.05) 100%);
+    border: 1px solid rgba(100, 116, 139, 0.15);
+}
+
+.quick-action-card {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.03) 0%, rgba(30, 64, 175, 0.03) 100%);
+    border: 1px solid rgba(30, 58, 138, 0.1);
+}
+
+.quick-action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-dictation {
+    flex: 1;
+    min-width: 160px;
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    color: #7c3aed;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-dictation:hover {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(124, 58, 237, 0.25) 100%);
+    border-color: rgba(139, 92, 246, 0.4);
+}
+
+.btn-translation {
+    flex: 1;
+    min-width: 160px;
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.15) 0%, rgba(234, 179, 8, 0.15) 100%);
+    border: 1px solid rgba(250, 204, 21, 0.3);
+    color: #a16207;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-translation:hover {
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.25) 0%, rgba(234, 179, 8, 0.25) 100%);
+    border-color: rgba(250, 204, 21, 0.4);
+}
+
+.sentence-count-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.sentence-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    background: var(--bg-light);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    transition: all 0.2s;
+}
+
+.sentence-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.sentence-btn.active {
+    background: linear-gradient(135deg, var(--primary-dark), #1e40af);
+    border-color: var(--primary-dark);
+    color: white;
 }
 
 .setup-title {
@@ -784,6 +881,9 @@ body {
     font-weight: 600;
     margin-bottom: 1.5rem;
     color: var(--primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .lesson-select-grid {
@@ -1088,6 +1188,14 @@ body {
     padding: 0.125rem 0.25rem;
     border-radius: 0.25rem;
     color: var(--success);
+}
+
+.highlight-correct-word {
+    background: rgba(16, 185, 129, 0.3);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    color: var(--success);
+    font-weight: 600;
 }
 
 @media (max-width: 1024px) {

@@ -40,7 +40,7 @@
                 </div>
             </div>
         </nav>
-
+ 
         <main id="main-content">
             <div id="page-login" class="page">
                 <div class="auth-page">
@@ -86,7 +86,7 @@
                     </div>
                 </div>
             </div>
-
+ 
             <div id="page-home" class="page">
                 <section class="hero">
                     <div class="hero-content">
@@ -95,7 +95,7 @@
                         <p class="hero-description">通过分级课程、翻译挑战和默写挑战，全面提升您的英语能力</p>
                     </div>
                 </section>
-
+ 
                 <section class="courses-section">
                     <div class="container">
                         <h2 class="section-title">选择您的课程</h2>
@@ -103,12 +103,12 @@
                     </div>
                 </section>
             </div>
-
+ 
             <div id="page-course" class="page">
                 <div class="course-page">
                     <div class="container">
-                        <button class="back-btn" onclick="navigate('home')">
-                            <i class="fas fa-arrow-left"></i> 返回首页
+                        <button class="back-btn" onclick="goBack()">
+                            <i class="fas fa-arrow-left"></i> 返回上一页
                         </button>
                         <h2 class="course-title" id="course-title"></h2>
                         <div class="course-layout">
@@ -126,13 +126,13 @@
                     </div>
                 </div>
             </div>
-
+ 
             <div id="page-translation" class="page">
-        <div class="practice-page">
-            <div class="container">
-                <button class="back-btn" onclick="goBackFromPractice()">
-                    <i class="fas fa-arrow-left"></i> 返回课程
-                </button>
+                <div class="practice-page">
+                    <div class="container">
+                        <button class="back-btn" onclick="goBack()">
+                            <i class="fas fa-arrow-left"></i> 返回上一页
+                        </button>
                 <h2 class="practice-title">翻译挑战</h2>
                 <div id="translation-sentences-container" class="translation-sentences-container"></div>
                 <div class="action-buttons" style="margin-top: 1.5rem;">
@@ -144,12 +144,12 @@
             </div>
         </div>
     </div>
-
+ 
             <div id="page-dictation" class="page">
                 <div class="practice-page">
                     <div class="container">
-                        <button class="back-btn" onclick="goBackFromPractice()">
-                            <i class="fas fa-arrow-left"></i> 返回课程
+                        <button class="back-btn" onclick="goBack()">
+                            <i class="fas fa-arrow-left"></i> 返回上一页
                         </button>
                         <h2 class="practice-title">默写挑战</h2>
                         <div id="dictation-container" class="dictation-sentences-container"></div>
@@ -162,58 +162,63 @@
                     </div>
                 </div>
             </div>
-
+ 
             <div id="page-random" class="page">
                 <div class="random-page">
                     <div class="container">
-                        <button class="back-btn" onclick="navigate('home')">
-                            <i class="fas fa-arrow-left"></i> 返回首页
+                        <button class="back-btn" onclick="goBack()">
+                            <i class="fas fa-arrow-left"></i> 返回上一页
                         </button>
                         <h2 class="practice-title">随机挑战</h2>
-                        <div id="random-setup" class="setup-container">
-                            <h3 class="setup-title">选择范围设置</h3>
-                            <div class="lesson-select-header">
-                                <div class="select-all-buttons">
-                                    <button class="btn btn-secondary" onclick="selectAllLessons()">
-                                        <i class="fas fa-check-square"></i> 全选
+                        <div id="random-setup">
+                            <div class="setup-section quick-action-card">
+                                <h3 class="setup-title"><i class="fas fa-bolt"></i> 快速开始</h3>
+                                <div class="quick-action-buttons">
+                                    <button class="btn btn-dictation" onclick="startQuickChallenge('dictation')">
+                                        <i class="fas fa-pencil-alt"></i> 开始默写挑战
                                     </button>
-                                    <button class="btn btn-secondary" onclick="deselectAllLessons()">
-                                        <i class="fas fa-square"></i> 取消全选
-                                    </button>
-                                </div>
-                                <div class="range-select">
-                                    <span>范围选择:</span>
-                                    <input type="number" id="rangeStart" min="1" max="50" placeholder="a" style="width: 50px;">
-                                    <span>-</span>
-                                    <input type="number" id="rangeEnd" min="1" max="50" placeholder="z" style="width: 50px;">
-                                    <button class="btn btn-secondary" onclick="selectRangeLessons()">
-                                        <i class="fas fa-sliders-h"></i> 选择范围
+                                    <button class="btn btn-translation" onclick="startQuickChallenge('translation')">
+                                        <i class="fas fa-language"></i> 开始翻译挑战
                                     </button>
                                 </div>
                             </div>
-                            <div class="lesson-select-grid" id="random-lesson-select"></div>
-                            <div class="setup-options">
-                                <label class="option-label">
-                                    <span>抽取句子数量：</span>
-                                    <select id="random-sentence-count">
-                                        <option value="5">5句</option>
-                                        <option value="10" selected>10句</option>
-                                        <option value="15">15句</option>
-                                        <option value="20">20句</option>
-                                    </select>
-                                </label>
-                                <label class="option-label">
-                                    <span>挑战类型：</span>
-                                    <select id="random-challenge-type">
-                                        <option value="dictation">默写挑战（中文→英文）</option>
-                                        <option value="translation">翻译挑战（英文→中文）</option>
-                                    </select>
-                                </label>
+                            <div class="setup-section setup-options-card">
+                                <h3 class="setup-title"><i class="fas fa-sliders-h"></i> 挑战设置</h3>
+                                <div class="setup-options">
+                                    <div class="option-label">
+                                        <span>抽取句子数量：</span>
+                                        <div class="sentence-count-buttons">
+                                            <button class="sentence-btn" onclick="setSentenceCount(5)">五句</button>
+                                            <button class="sentence-btn active" onclick="setSentenceCount(10)">十句</button>
+                                            <button class="sentence-btn" onclick="setSentenceCount(15)">十五句</button>
+                                            <button class="sentence-btn" onclick="setSentenceCount(20)">二十句</button>
+                                        </div>
+                                        <input type="hidden" id="random-sentence-count" value="10">
+                                    </div>
+                                </div>
                             </div>
-                            <div class="action-buttons">
-                                <button class="btn btn-primary" onclick="startRandomChallenge()">
-                                    <i class="fas fa-dice"></i> 开始挑战
-                                </button>
+                            <div class="setup-section lesson-select-card">
+                                <h3 class="setup-title"><i class="fas fa-book-open"></i> 选择课程</h3>
+                                <div class="lesson-select-header">
+                                    <div class="select-all-buttons">
+                                        <button class="btn btn-secondary" onclick="selectAllLessons()">
+                                            <i class="fas fa-check-square"></i> 全选
+                                        </button>
+                                        <button class="btn btn-secondary" onclick="deselectAllLessons()">
+                                            <i class="fas fa-square"></i> 取消全选
+                                        </button>
+                                    </div>
+                                    <div class="range-select">
+                                        <span>范围选择:</span>
+                                        <input type="number" id="rangeStart" min="1" max="50" placeholder="a" style="width: 50px;">
+                                        <span>-</span>
+                                        <input type="number" id="rangeEnd" min="1" max="50" placeholder="z" style="width: 50px;">
+                                        <button class="btn btn-secondary" onclick="selectRangeLessons()">
+                                            <i class="fas fa-sliders-h"></i> 选择范围
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="lesson-select-grid" id="random-lesson-select"></div>
                             </div>
                         </div>
                         <div id="random-challenge" class="hidden">
@@ -228,19 +233,51 @@
                     </div>
                 </div>
             </div>
-
+ 
             <div id="page-mistakes" class="page">
                 <div class="mistakes-page">
                     <div class="container">
-                        <button class="back-btn" onclick="navigate('home')">
-                            <i class="fas fa-arrow-left"></i> 返回首页
+                        <button class="back-btn" onclick="goBack()">
+                            <i class="fas fa-arrow-left"></i> 返回上一页
                         </button>
                         <h2 class="practice-title">错题集</h2>
+                        <div id="mistakes-action" class="action-buttons" style="margin-bottom: 1.5rem;">
+                            <button class="btn btn-primary" onclick="startMistakesChallenge()" id="mistakes-challenge-btn">
+                                <i class="fas fa-shuffle"></i> 随机5道错题
+                            </button>
+                        </div>
                         <div id="mistakes-list" class="mistakes-list"></div>
                     </div>
                 </div>
             </div>
-
+            <div id="page-mistakes-challenge" class="page hidden">
+                <div class="mistakes-challenge-page">
+                    <div class="container">
+                        <button class="back-btn" onclick="navigate('home')">
+                            <i class="fas fa-arrow-left"></i> 返回首页
+                        <button class="back-btn" onclick="goBack()">
+                            <i class="fas fa-arrow-left"></i> 返回上一页
+                        </button>
+                        <h2 class="practice-title">错题练习</h2>
+                        <div id="mistakes-challenge-container"></div>
+                        <div id="mistakes-challenge-result" class="hidden">
+                            <div class="result-header">
+                                <div class="score-display good" id="mistakes-challenge-score">0分</div>
+                                <div class="score-label" id="mistakes-challenge-label">完成练习</div>
+                                <div style="margin-top: 1rem; font-size: 0.95rem; color: #64748b;">
+                                    本轮练习完成
+                                </div>
+                                <div style="margin-top: 1.5rem;">
+                                    <button class="btn btn-primary" onclick="startMistakesChallenge()">
+                                        <i class="fas fa-redo"></i> 再来一次
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+ 
             <div id="page-history" class="page">
                 <div class="history-page">
                     <div class="container">
@@ -251,7 +288,7 @@
             </div>
         </main>
     </div>
-
+ 
     <script src="data.js"></script>
     <script src="app.js"></script>
 </body>
