@@ -145,6 +145,8 @@ function navigate(page, data = null) {
         targetPage.classList.remove('hidden');
         targetPage.classList.add('active');
     }
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     switch(page) {
         case 'home':
@@ -283,11 +285,23 @@ function initCoursePage(bookId) {
         const lesson = bookLessons.find(l => l.lessonNumber === i);
         const item = document.createElement('div');
         item.className = 'lesson-item ' + (i % 2 === 1 ? 'lesson-odd' : 'lesson-even');
+        
+        const hasTranslation = history.some(h => h.lessonId === (lesson ? lesson.id : '') && h.type === 'translation');
+        const hasDictation = history.some(h => h.lessonId === (lesson ? lesson.id : '') && h.type === 'dictation');
+        
+        let badges = '';
+        if (hasTranslation) {
+            badges += '<span class="lesson-badge lesson-badge-translation"></span>';
+        }
+        if (hasDictation) {
+            badges += '<span class="lesson-badge lesson-badge-dictation"></span>';
+        }
+        
         if (lesson) {
-            item.textContent = 'Lesson ' + i + ': ' + lesson.title;
+            item.innerHTML = badges + 'Lesson ' + i + ': ' + lesson.title;
             item.onclick = () => showLessonDetail(lesson.id);
         } else {
-            item.textContent = 'Lesson ' + i;
+            item.innerHTML = badges + 'Lesson ' + i;
             item.style.opacity = '0.5';
         }
         lessonList.appendChild(item);
@@ -351,6 +365,12 @@ function showLessonDetail(lessonId) {
 function initTranslationPage(lessonId) {
     const lesson = lessons.find(l => l.id === lessonId);
     if (!lesson) return;
+
+    currentLessonId = lessonId;
+    currentBookId = lesson.bookId;
+
+    const lessonTitleDiv = document.getElementById('translation-lesson-title');
+    lessonTitleDiv.innerHTML = '<span class="lesson-number">Lesson ' + lesson.lessonNumber + '</span> - ' + lesson.title;
 
     const container = document.getElementById('translation-sentences-container');
     const englishTexts = Array.isArray(lesson.englishText) ? lesson.englishText : [lesson.englishText];
@@ -439,6 +459,20 @@ function checkAllTranslation() {
     });
 
     showTranslationResult(translationAnswers, correctCount, englishTexts.length, score);
+    
+    setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }, 100);
+}
+
+function getNextLessonId(currentId) {
+    const parts = currentId.split('-');
+    const bookId = parseInt(parts[0]);
+    const lessonNum = parseInt(parts[1]);
+    const bookLessons = lessons.filter(l => l.bookId === bookId);
+    const nextNum = lessonNum + 1;
+    const nextLesson = bookLessons.find(l => l.lessonNumber === nextNum);
+    return nextLesson ? nextLesson.id : null;
 }
 
 function showTranslationResult(translationAnswers, correctCount, totalCount, score) {
@@ -473,8 +507,17 @@ function showTranslationResult(translationAnswers, correctCount, totalCount, sco
         scoreLabel = '继续努力';
     }
 
+    const nextLessonId = getNextLessonId(currentLessonId);
+    
     const resultDiv = document.getElementById('translation-result');
     resultDiv.classList.remove('hidden');
+    
+    let nextBtn = '';
+    if (nextLessonId) {
+        nextBtn = '<button class="btn btn-success" style="margin-left: 0.75rem;" onclick="window.scrollTo({top:0,behavior:\'smooth\'});initTranslationPage(\'' + nextLessonId + '\')">' +
+            '<i class="fas fa-arrow-right"></i> Next Lesson' +
+        '</button>';
+    }
     
     resultDiv.innerHTML = 
         '<div class="result-header">' +
@@ -483,12 +526,24 @@ function showTranslationResult(translationAnswers, correctCount, totalCount, sco
             '<div style="margin-top: 1rem; font-size: 0.95rem; color: #64748b;">' +
                 '正确: ' + correctCount + ' / ' + totalCount + ' 句' +
             '</div>' +
+            '<div style="margin-top: 1.5rem;">' +
+                '<button class="btn btn-primary" onclick="window.scrollTo({top:0,behavior:\'smooth\'});initTranslationPage(\'' + currentLessonId + '\')">' +
+                    '<i class="fas fa-redo"></i> 再来一次' +
+                '</button>' +
+                nextBtn +
+            '</div>' +
         '</div>';
 }
 
 function initDictationPage(lessonId) {
     const lesson = lessons.find(l => l.id === lessonId);
     if (!lesson) return;
+
+    currentLessonId = lessonId;
+    currentBookId = lesson.bookId;
+
+    const lessonTitleDiv = document.getElementById('dictation-lesson-title');
+    lessonTitleDiv.innerHTML = '<span class="lesson-number">Lesson ' + lesson.lessonNumber + '</span> - ' + lesson.title;
 
     const container = document.getElementById('dictation-container');
     const chineseTexts = Array.isArray(lesson.chineseText) ? lesson.chineseText : [lesson.chineseText];
@@ -586,6 +641,10 @@ function checkAllDictation() {
     });
 
     showDictationResult(dictationAnswers, correctCount, chineseTexts.length, score);
+    
+    setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }, 100);
 }
 
 function showDictationResult(dictationAnswers, correctCount, totalCount, score) {
@@ -626,8 +685,17 @@ function showDictationResult(dictationAnswers, correctCount, totalCount, score) 
         scoreLabel = '继续努力';
     }
 
+    const nextLessonId = getNextLessonId(currentLessonId);
+    
     const resultDiv = document.getElementById('dictation-result');
     resultDiv.classList.remove('hidden');
+    
+    let nextBtn = '';
+    if (nextLessonId) {
+        nextBtn = '<button class="btn btn-success" style="margin-left: 0.75rem;" onclick="window.scrollTo({top:0,behavior:\'smooth\'});initDictationPage(\'' + nextLessonId + '\')">' +
+            '<i class="fas fa-arrow-right"></i> Next Lesson' +
+        '</button>';
+    }
     
     resultDiv.innerHTML = 
         '<div class="result-header">' +
@@ -637,9 +705,10 @@ function showDictationResult(dictationAnswers, correctCount, totalCount, score) 
                 '正确: ' + correctCount + ' / ' + totalCount + ' 句' +
             '</div>' +
             '<div style="margin-top: 1.5rem;">' +
-                '<button class="btn btn-primary" onclick="initDictationPage(\'' + currentLessonId + '\')">' +
+                '<button class="btn btn-primary" onclick="window.scrollTo({top:0,behavior:\'smooth\'});initDictationPage(\'' + currentLessonId + '\')">' +
                     '<i class="fas fa-redo"></i> 再来一次' +
                 '</button>' +
+                nextBtn +
             '</div>' +
         '</div>';
 }
@@ -1065,6 +1134,10 @@ function submitRandomChallenge() {
                     '</button>' +
                 '</div>' +
             '</div>';
+        
+        setTimeout(() => {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }, 100);
         return;
     }
     
@@ -1155,6 +1228,10 @@ function submitRandomChallenge() {
                 '</button>' +
             '</div>' +
         '</div>';
+    
+    setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }, 100);
 }
 
 function shuffleArray(array) {
