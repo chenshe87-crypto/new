@@ -5,6 +5,15 @@ let selectedLessons = [];
 let randomChallengeQuestions = [];
 let practiceSource = null;
 
+function scrollToTop() {
+    if ('scrollBehavior' in document.documentElement.style) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    }
+}
+
 function saveMistakes(newMistakes) {
     mistakes = newMistakes;
     saveUserData();
@@ -514,7 +523,7 @@ function showTranslationResult(translationAnswers, correctCount, totalCount, sco
     
     let nextBtn = '';
     if (nextLessonId) {
-        nextBtn = '<button class="btn btn-success" style="margin-left: 0.75rem;" onclick="window.scrollTo({top:0,behavior:\'smooth\'});initTranslationPage(\'' + nextLessonId + '\')">' +
+        nextBtn = '<button class="btn btn-success" style="margin-left: 0.75rem;" onclick="scrollToTop();initTranslationPage(\'' + nextLessonId + '\')">' +
             '<i class="fas fa-arrow-right"></i> Next Lesson' +
         '</button>';
     }
@@ -527,7 +536,7 @@ function showTranslationResult(translationAnswers, correctCount, totalCount, sco
                 '正确: ' + correctCount + ' / ' + totalCount + ' 句' +
             '</div>' +
             '<div style="margin-top: 1.5rem;">' +
-                '<button class="btn btn-primary" onclick="window.scrollTo({top:0,behavior:\'smooth\'});initTranslationPage(\'' + currentLessonId + '\')">' +
+                '<button class="btn btn-primary" onclick="scrollToTop();initTranslationPage(\'' + currentLessonId + '\')">' +
                     '<i class="fas fa-redo"></i> 再来一次' +
                 '</button>' +
                 nextBtn +
@@ -692,7 +701,7 @@ function showDictationResult(dictationAnswers, correctCount, totalCount, score) 
     
     let nextBtn = '';
     if (nextLessonId) {
-        nextBtn = '<button class="btn btn-success" style="margin-left: 0.75rem;" onclick="window.scrollTo({top:0,behavior:\'smooth\'});initDictationPage(\'' + nextLessonId + '\')">' +
+        nextBtn = '<button class="btn btn-success" style="margin-left: 0.75rem;" onclick="scrollToTop();initDictationPage(\'' + nextLessonId + '\')">' +
             '<i class="fas fa-arrow-right"></i> Next Lesson' +
         '</button>';
     }
@@ -705,7 +714,7 @@ function showDictationResult(dictationAnswers, correctCount, totalCount, score) 
                 '正确: ' + correctCount + ' / ' + totalCount + ' 句' +
             '</div>' +
             '<div style="margin-top: 1.5rem;">' +
-                '<button class="btn btn-primary" onclick="window.scrollTo({top:0,behavior:\'smooth\'});initDictationPage(\'' + currentLessonId + '\')">' +
+                '<button class="btn btn-primary" onclick="scrollToTop();initDictationPage(\'' + currentLessonId + '\')">' +
                     '<i class="fas fa-redo"></i> 再来一次' +
                 '</button>' +
                 nextBtn +
@@ -1129,7 +1138,7 @@ function submitRandomChallenge() {
                     '正确: ' + correctCount + ' / ' + randomChallengeQuestions.length + ' 句' +
                 '</div>' +
                 '<div style="margin-top: 1.5rem;">' +
-                    '<button class="btn btn-primary" onclick="initRandomPage()">' +
+                    '<button class="btn btn-primary" onclick="scrollToTop();initRandomPage()">' +
                         '<i class="fas fa-redo"></i> 再来一次' +
                     '</button>' +
                 '</div>' +
@@ -1223,7 +1232,7 @@ function submitRandomChallenge() {
                 '正确: ' + correctCount + ' / ' + randomChallengeQuestions.length + ' 题' +
             '</div>' +
             '<div style="margin-top: 1.5rem;">' +
-                '<button class="btn btn-primary" onclick="initRandomPage()">' +
+                '<button class="btn btn-primary" onclick="scrollToTop();initRandomPage()">' +
                     '<i class="fas fa-redo"></i> 再来一次' +
                 '</button>' +
             '</div>' +
