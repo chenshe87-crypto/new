@@ -433,6 +433,9 @@ body {
     border-radius: 1rem;
     padding: 2rem;
     box-shadow: var(--shadow);
+    margin: 0 auto;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .empty-state {
@@ -574,6 +577,14 @@ body {
 .result-header {
     text-align: center;
     margin-bottom: 2rem;
+}
+
+.result-header .btn {
+    display: block;
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto 0.75rem auto;
+    justify-content: center;
 }
 
 .score-display {
@@ -1271,6 +1282,8 @@ body {
 
     .lesson-content {
         padding: 1.5rem;
+        margin: 1rem auto;
+        max-width: 100%;
     }
 
     .practice-container {
@@ -1279,6 +1292,13 @@ body {
 
     .comparison-content {
         grid-template-columns: 1fr;
+    }
+
+    .result-header .btn {
+        max-width: 100%;
+        margin: 0 auto 1rem auto;
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
     }
 }
 
