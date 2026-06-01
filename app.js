@@ -1510,6 +1510,12 @@ function submitMistakesChallenge() {
     updateMistakesSuccessCount(mistakesChallengeCorrectIds);
     
     document.getElementById('mistakes-challenge-result').classList.remove('hidden');
+    
+    setTimeout(() => {
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        window.scrollTo(0, document.body.scrollHeight);
+    }, 100);
 }
 
 function updateMistakesSuccessCount(mistakeIds) {
