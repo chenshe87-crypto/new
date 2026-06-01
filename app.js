@@ -366,6 +366,10 @@ function showLessonDetail(lessonId) {
                 '<i class="fas fa-pencil-alt"></i> 默写挑战' +
             '</button>' +
         '</div>';
+    
+    setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }, 100);
 }
 
 function initTranslationPage(lessonId) {

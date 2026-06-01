@@ -1255,10 +1255,22 @@ body {
 @media (max-width: 1024px) {
     .course-layout {
         grid-template-columns: 1fr;
+        padding: 0 1rem;
     }
 
     .lesson-sidebar {
         position: static;
+        margin: 0 auto;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .lesson-list {
+        max-height: 400px;
+    }
+
+    .lesson-content {
+        padding: 1.5rem;
     }
 
     .practice-container {
