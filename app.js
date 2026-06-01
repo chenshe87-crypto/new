@@ -195,6 +195,22 @@ function goBack() {
     
     const pageId = currentPage.id;
     
+    if (pageId === 'page-random') {
+        const randomChallenge = document.getElementById('random-challenge');
+        if (randomChallenge && !randomChallenge.classList.contains('hidden')) {
+            randomChallenge.classList.add('hidden');
+            const randomSetup = document.getElementById('random-setup');
+            if (randomSetup) {
+                randomSetup.classList.remove('hidden');
+            }
+            const randomResult = document.getElementById('random-result');
+            if (randomResult) {
+                randomResult.classList.add('hidden');
+            }
+            return;
+        }
+    }
+    
     if (pageId === 'page-translation' || pageId === 'page-dictation') {
         if (practiceSource === 'random') {
             navigate('random');
@@ -323,11 +339,11 @@ function showLessonDetail(lessonId) {
             '<div class="text-content">' + chineseText + '</div>' +
         '</div>' +
         '<div class="practice-actions">' +
-            '<button class="btn btn-primary" onclick="navigate(\'translation\', { lessonId: \'' + lesson.id + '\' })">' +
-                '<i class="fas fa-pen-fancy"></i> 翻译挑战' +
+            '<button class="btn btn-translation" onclick="navigate(\'translation\', { lessonId: \'' + lesson.id + '\' })">' +
+                '<i class="fas fa-language"></i> 翻译挑战' +
             '</button>' +
-            '<button class="btn btn-primary" onclick="navigate(\'dictation\', { lessonId: \'' + lesson.id + '\' })">' +
-                '<i class="fas fa-keyboard"></i> 默写挑战' +
+            '<button class="btn btn-dictation" onclick="navigate(\'dictation\', { lessonId: \'' + lesson.id + '\' })">' +
+                '<i class="fas fa-pencil-alt"></i> 默写挑战' +
             '</button>' +
         '</div>';
 }
@@ -390,15 +406,15 @@ function checkAllTranslation() {
     let correctCount = 0;
 
     for (let i = 0; i < englishTexts.length; i++) {
-        const userAnswer = document.getElementById('translation-' + i).value.trim();
-        const correctAnswer = chineseTexts[i];
-        const isCorrect = userAnswer === correctAnswer;
+        const checkbox = document.getElementById('toggle-' + i);
+        const isChecked = checkbox ? checkbox.checked : false;
+        const isCorrect = !isChecked;
         
         if (!isCorrect) {
             addMistake({
                 lessonId: currentLessonId,
-                chinese: correctAnswer,
-                userAnswer: userAnswer,
+                chinese: chineseTexts[i],
+                userAnswer: '需要查看答案',
                 correctAnswer: englishTexts[i]
             });
         } else {
@@ -406,8 +422,8 @@ function checkAllTranslation() {
         }
         
         translationAnswers.push({
-            userAnswer: userAnswer,
-            correctAnswer: correctAnswer,
+            userAnswer: isChecked ? '查看译文' : '已掌握',
+            correctAnswer: chineseTexts[i],
             isCorrect: isCorrect,
             index: i
         });
@@ -430,18 +446,20 @@ function showTranslationResult(translationAnswers, correctCount, totalCount, sco
     
     translationAnswers.forEach(answer => {
         const item = container.querySelector('[data-index="' + answer.index + '"]');
-        const input = item.querySelector('.translation-input');
-        input.disabled = true;
+        const checkbox = document.getElementById('toggle-' + answer.index);
+        const answerDiv = document.getElementById('answer-' + answer.index);
+        
+        if (checkbox) {
+            checkbox.disabled = true;
+        }
         
         if (answer.isCorrect) {
-            input.classList.add('correct');
+            item.classList.add('translation-correct');
         } else {
-            input.classList.add('incorrect');
-            
-            const correctDiv = document.createElement('div');
-            correctDiv.className = 'dictation-correct';
-            correctDiv.innerHTML = '<i class="fas fa-lightbulb"></i> 正确答案：' + answer.correctAnswer;
-            item.appendChild(correctDiv);
+            item.classList.add('translation-incorrect');
+            if (answerDiv) {
+                answerDiv.style.display = 'block';
+            }
         }
     });
 
@@ -884,7 +902,8 @@ function startRandomChallenge() {
     
     const selectedLessonIds = Array.from(checkboxes).map(cb => cb.id.replace('select-', ''));
     const sentenceCount = parseInt(document.getElementById('random-sentence-count').value);
-    const challengeType = document.getElementById('random-challenge-type').value;
+    const challengeTypeSelect = document.getElementById('random-challenge-type');
+    const challengeType = challengeTypeSelect ? challengeTypeSelect.value : 'dictation';
     
     localStorage.setItem('randomLessonSelection', JSON.stringify(selectedLessonIds));
     
@@ -938,7 +957,10 @@ function renderRandomChallenge(type) {
             '</div>';
         }).join('');
     } else {
-        container.innerHTML = '<div class="translation-sentences-container">' + randomChallengeQuestions.map((q, index) => {
+        container.innerHTML = '<div style="color: #ef4444; font-size: 0.95rem; margin-bottom: 1rem; font-weight: 500;">' +
+            '⚠️ 判定规则：勾选"译文"代表错误（需要查看答案），未勾选"译文"代表正确（已掌握）' +
+        '</div>' +
+        '<div class="translation-sentences-container">' + randomChallengeQuestions.map((q, index) => {
             return '<div class="translation-sentence-item" data-index="' + index + '">' +
                 '<div class="translation-sentence-header">' +
                     '<div>' +
@@ -965,25 +987,78 @@ function submitRandomChallenge() {
     const container = document.getElementById('random-question-container');
     
     if (challengeType === 'translation') {
+        let correctCount = 0;
+        const results = [];
+        
         randomChallengeQuestions.forEach((q, index) => {
+            const checkbox = document.getElementById('random-toggle-' + index);
+            const isChecked = checkbox ? checkbox.checked : false;
+            const isCorrect = !isChecked;
+            
+            if (!isCorrect) {
+                addMistake({
+                    lessonId: q.lessonId,
+                    chinese: q.chinese,
+                    userAnswer: '需要查看答案',
+                    correctAnswer: q.english
+                });
+            } else {
+                correctCount++;
+            }
+            
+            results.push({
+                userAnswer: isChecked ? '查看译文' : '已掌握',
+                correctAnswer: q.chinese,
+                isCorrect: isCorrect,
+                index: index
+            });
+            
+            const item = container.querySelector('[data-index="' + index + '"]');
             const answerDiv = document.getElementById('random-answer-' + index);
-            if (answerDiv) {
-                answerDiv.style.display = 'block';
+            
+            if (checkbox) {
+                checkbox.disabled = true;
+            }
+            
+            if (isCorrect) {
+                item.classList.add('translation-correct');
+            } else {
+                item.classList.add('translation-incorrect');
+                if (answerDiv) {
+                    answerDiv.style.display = 'block';
+                }
             }
         });
+        
+        const score = Math.round((correctCount / randomChallengeQuestions.length) * 100);
         
         addHistoryRecord({
             lessonId: 'random',
             type: 'random-translation',
-            userAnswer: 'viewed',
-            score: 0
+            userAnswer: results.map(r => r.userAnswer).join(' | '),
+            score: score
         });
+        
+        let scoreClass = 'need-improve';
+        let scoreLabel = '需要加强';
+        if (score >= 80) {
+            scoreClass = 'good';
+            scoreLabel = '优秀！';
+        } else if (score >= 60) {
+            scoreClass = 'medium';
+            scoreLabel = '继续努力';
+        }
         
         const resultDiv = document.getElementById('random-result');
         resultDiv.classList.remove('hidden');
         
         resultDiv.innerHTML = 
             '<div class="result-header">' +
+                '<div class="score-display ' + scoreClass + '">' + score + '分</div>' +
+                '<div class="score-label">' + scoreLabel + '</div>' +
+                '<div style="margin-top: 1rem; font-size: 0.95rem; color: #64748b;">' +
+                    '正确: ' + correctCount + ' / ' + randomChallengeQuestions.length + ' 句' +
+                '</div>' +
                 '<div style="margin-top: 1.5rem;">' +
                     '<button class="btn btn-primary" onclick="initRandomPage()">' +
                         '<i class="fas fa-redo"></i> 再来一次' +
@@ -1180,7 +1255,8 @@ function initMistakesPage() {
                 day: '2-digit'
             });
             
-            return '<div class="mistake-item">' +
+            const isTranslation = mistake.userAnswer === '需要查看答案' || mistake.userAnswer === '查看译文';
+            return '<div class="mistake-item ' + (isTranslation ? 'mistake-translation' : 'mistake-dictation') + '">' +
                 '<div class="mistake-header">' +
                     '<div class="mistake-lesson">' + (lesson ? 'Lesson ' + lesson.lessonNumber : '随机练习') + '</div>' +
                     '<div class="mistake-date">' + dateStr + '</div>' +
@@ -1189,18 +1265,28 @@ function initMistakesPage() {
                     '</button>' +
                 '</div>' +
                 '<div class="mistake-content">' +
-                    '<div class="mistake-row">' +
-                        '<span class="mistake-label">中文：</span>' +
-                        '<span class="mistake-text">' + mistake.chinese + '</span>' +
-                    '</div>' +
-                    '<div class="mistake-row">' +
-                        '<span class="mistake-label">您的答案：</span>' +
-                        '<span class="mistake-text mistake-incorrect">' + mistake.userAnswer + '</span>' +
-                    '</div>' +
-                    '<div class="mistake-row">' +
-                        '<span class="mistake-label">正确答案：</span>' +
-                        '<span class="mistake-text mistake-correct">' + mistake.correctAnswer + '</span>' +
-                    '</div>' +
+                    (isTranslation ? 
+                        '<div class="mistake-row">' +
+                            '<span class="mistake-label">英文：</span>' +
+                            '<span class="mistake-text">' + mistake.correctAnswer + '</span>' +
+                        '</div>' +
+                        '<div class="mistake-row">' +
+                            '<span class="mistake-label">正确答案：</span>' +
+                            '<span class="mistake-text mistake-correct">' + mistake.chinese + '</span>' +
+                        '</div>' : 
+                        '<div class="mistake-row">' +
+                            '<span class="mistake-label">中文：</span>' +
+                            '<span class="mistake-text">' + mistake.chinese + '</span>' +
+                        '</div>' +
+                        '<div class="mistake-row">' +
+                            '<span class="mistake-label">您的答案：</span>' +
+                            '<span class="mistake-text mistake-incorrect">' + mistake.userAnswer + '</span>' +
+                        '</div>' +
+                        '<div class="mistake-row">' +
+                            '<span class="mistake-label">正确答案：</span>' +
+                            '<span class="mistake-text mistake-correct">' + mistake.correctAnswer + '</span>' +
+                        '</div>'
+                    ) +
                 '</div>' +
             '</div>';
         }).join('');

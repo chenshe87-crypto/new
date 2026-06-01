@@ -2,9 +2,15 @@
 const books = [
     {
         id: 1,
-        title: "新概念英语 第一册",
+        title: "新概念英语 1",
         description: "英语初阶 - 适合零基础学习者",
         lessons: 144
+    },
+    {
+        id: 2,
+        title: "新概念英语 2",
+        description: "实践与进步 - 适合有基础学习者",
+        lessons: 96
     }
 ];
 
@@ -4737,6 +4743,939 @@ const lessons = [
             "不，他们还没有被告知。",
             "信寄出去了吗？",
             "不，还没有寄出去。"
+        ]
+    },
+    {
+        id: "2-1",
+        bookId: 2,
+        lessonNumber: 1,
+        title: "A private conversation",
+        englishText: [
+            "Last week I went to the theatre.",
+            "I had a very good seat.",
+            "The play was very interesting.",
+            "I did not enjoy it.",
+            "A young man and a young woman were sitting behind me.",
+            "They were talking loudly.",
+            "I got very angry.",
+            "I could not hear the actors.",
+            "I turned round.",
+            "I looked at the man and the woman angrily.",
+            "They did not pay any attention.",
+            "In the end, I could not bear it.",
+            "I turned round again.",
+            "I can't hear a word! I said angrily.",
+            "It's none of your business, the young man said rudely.",
+            "This is a private conversation!"
+        ],
+        chineseText: [
+            "上星期我去看戏。",
+            "我的座位很好。",
+            "戏很有意思。",
+            "但我无法欣赏。",
+            "一位青年男子与一位青年女子坐在我的身后。",
+            "他们在大声地交谈。",
+            "我非常生气。",
+            "我听不见演员在说什么。",
+            "我回过头去，怒视着那一男一女。",
+            "他们却毫不理会。",
+            "最后，我忍不住了。",
+            "我又一次回过头去。",
+            "我一个字也听不见了！我生气地说。",
+            "不管你的事，那男的毫不客气地说。",
+            "这是私人间的谈话！"
+        ]
+    },
+    {
+        id: "2-2",
+        bookId: 2,
+        lessonNumber: 2,
+        title: "Breakfast or lunch?",
+        englishText: [
+            "It was Sunday.",
+            "I never get up early on Sundays.",
+            "I sometimes stay in bed until lunchtime.",
+            "Last Sunday I got up very late.",
+            "I looked out of the window.",
+            "It was dark outside.",
+            "What a day! I thought.",
+            "It's raining again.",
+            "Just then, the telephone rang.",
+            "It was my aunt Lucy.",
+            "I've just arrived by train, she said.",
+            "I'm coming to see you.",
+            "But I'm still having breakfast, I said.",
+            "What are you doing? she asked.",
+            "I'm having breakfast, I repeated.",
+            "Dear me, she said.",
+            "Do you always get up so late?",
+            "It's one o'clock!"
+        ],
+        chineseText: [
+            "那是个星期天。",
+            "而在星期天我是从来不早起的。",
+            "有时我要一直躺到吃午饭的时候。",
+            "上个星期天我起得很晚。",
+            "我望望窗外。",
+            "外面一片昏暗。",
+            "鬼天气！我想。",
+            "又下雨了。",
+            "正在这时，电话铃响了。",
+            "是我姑母露西打来的。",
+            "我刚下火车，她说。",
+            "我这就来看你。",
+            "但我还在吃早饭，我说。",
+            "你在干什么？她问道。",
+            "我正在吃早饭，我又说了一遍。",
+            "天哪，她说。",
+            "你总是起得这么晚吗？",
+            "现在已经1点钟了！"
+        ]
+    },
+    {
+        id: "2-3",
+        bookId: 2,
+        lessonNumber: 3,
+        title: "Please send me a card",
+        englishText: [
+            "Postcards always spoil my holidays.",
+            "Last summer, I went to Italy.",
+            "I visited museums and sat in public gardens.",
+            "A friendly waiter taught me a few words of Italian.",
+            "Then he lent me a book.",
+            "I read a few lines, but I did not understand a word.",
+            "Every day I thought about postcards.",
+            "My holidays passed quickly, but I did not send cards to my friends.",
+            "On the last day I made a big decision.",
+            "I got up early and bought thirty-seven cards.",
+            "I spent the whole day in my room, but I did not write a single card!"
+        ],
+        chineseText: [
+            "明信片总搅得我假日不得安宁。",
+            "去年夏天，我去了意大利。",
+            "我参观了博物馆，还去了公园。",
+            "一位好客的服务员教了我几句意大利语。",
+            "之后还借给我一本书。",
+            "我读了几行，但一个字也不懂。",
+            "我每天都想着明信片的事。",
+            "假期过得真快，可我还没有给我的朋友们寄过一张明信片。",
+            "到了最后一天，我作出了一项重大决定。",
+            "我早早起了床，买来了37张明信片。",
+            "我在房间里关了整整一天，然而竟连一张明信片也没写成！"
+        ]
+    },
+    {
+        id: "2-4",
+        bookId: 2,
+        lessonNumber: 4,
+        title: "An exciting trip",
+        englishText: [
+            "I have just received a letter from my brother, Tim.",
+            "He is in Australia.",
+            "He has been there for six months.",
+            "Tim is an engineer.",
+            "He is working for a big firm and he has already visited a great number of different places in Australia.",
+            "He has just bought an Australian car and has gone to Alice Springs, a small town in the centre of Australia.",
+            "He will soon visit Darwin.",
+            "From there, he will fly to Perth.",
+            "My brother has never been abroad before, so he is finding this trip very exciting."
+        ],
+        chineseText: [
+            "我刚刚收到弟弟蒂姆的来信。",
+            "他正在澳大利亚。",
+            "他在那儿已经住了6个月了。",
+            "蒂姆是个工程师。",
+            "他正在为一家大公司工作，并且已经去过澳大利亚的不少地方了。",
+            "他刚买了一辆澳大利亚小汽车，现在去了澳大利亚中部的小镇艾利斯斯普林斯。",
+            "他不久还将到达尔文去。",
+            "从那里，他再飞往珀斯。",
+            "我弟弟以前从未出过国，因此，他觉得这次旅行非常激动人心。"
+        ]
+    },
+    {
+        id: "2-5",
+        bookId: 2,
+        lessonNumber: 5,
+        title: "No wrong numbers",
+        englishText: [
+            "Mr. James Scott has a garage in Silbury and now he has just bought another garage in Pinhurst.",
+            "Pinhurst is only five miles from Silbury, but Mr. Scott cannot get a telephone for his new garage, so he has just bought twelve pigeons.",
+            "Yesterday, a pigeon carried the first message from Pinhurst to Silbury.",
+            "The bird covered the distance in three minutes.",
+            "Up to now, Mr. Scott has sent a great many requests for spare parts and other urgent messages from one garage to the other.",
+            "In this way, he has begun his own private telephone service."
+        ],
+        chineseText: [
+            "詹姆斯·斯科特先生在锡尔伯里有一个汽车修理部，现在他刚在平赫斯特买了另一个汽车修理部。",
+            "平赫斯特离锡尔伯里只有5英里，但詹姆斯·斯科特先生未能为他新的汽车修理部搞到一部电话机，所以他买了12只鸽子。",
+            "昨天，一只鸽子把第一封信从平赫斯特带到锡尔伯里。",
+            "这只鸟只用了3分钟就飞完了全程。",
+            "到目前为止，斯科特先生从一个汽车修理部向另一个发送了大量索取备件的信件和其他紧急函件。",
+            "就这样，他开始了自己的私人电话业务。"
+        ]
+    },
+    {
+        id: "2-6",
+        bookId: 2,
+        lessonNumber: 6,
+        title: "Percy Buttons",
+        englishText: [
+            "I have just moved to a house in Bridge Street.",
+            "Yesterday a beggar knocked at my door.",
+            "He asked me for a meal and a glass of beer.",
+            "In return for this, the beggar stood on his head and sang songs.",
+            "I gave him a meal.",
+            "He ate the food and drank the beer.",
+            "Then he put a piece of cheese in his pocket and went away.",
+            "Later a neighbour told me about him.",
+            "Everybody knows him.",
+            "His name is Percy Buttons.",
+            "He calls at every house in the street once a month and always asks for a meal and a glass of beer."
+        ],
+        chineseText: [
+            "我刚刚搬进了大桥街的一所房子。",
+            "昨天一个乞丐来敲我的门。",
+            "问我要一顿饭和一杯啤酒。",
+            "作为回报，那乞丐头顶地倒立起来，嘴里还唱着歌。",
+            "我给了他一顿饭。",
+            "他把食物吃完，又喝了酒。",
+            "然后把一块乳酪装进衣袋里走了。",
+            "后来，一位邻居告诉了我他的情况。",
+            "大家都认识他。",
+            "他叫珀西·巴顿斯。",
+            "他每月对这条街上的每户人家光顾一次，总是请求给他一顿饭和一杯啤酒。"
+        ]
+    },
+    {
+        id: "2-7",
+        bookId: 2,
+        lessonNumber: 7,
+        title: "Too late",
+        englishText: [
+            "The plane was late and detectives were waiting at the airport all morning.",
+            "They were expecting a valuable parcel of diamonds from South Africa.",
+            "A few hours earlier, someone had told the police that thieves would try to steal the diamonds.",
+            "When the plane arrived, some of the detectives were waiting inside the main building while others were waiting on the airfield.",
+            "Two men took the parcel off the plane and carried it into the Customs House.",
+            "While two detectives were keeping guard at the door, two others opened the parcel.",
+            "To their surprise, the precious parcel was full of stones and sand!"
+        ],
+        chineseText: [
+            "飞机误点了，侦探们在机场等了整整一个上午。",
+            "他们正期待从南非来的一个装着钻石的贵重包裹。",
+            "数小时以前，有人向警方报告，说有人企图偷走这些钻石。",
+            "当飞机到达时，一些侦探等候在主楼内，另一些侦探则守候在停机坪上。",
+            "有两个人把包裹拿下飞机，进了海关。",
+            "这时两个侦探把住门口，另外两个侦探打开了包裹。",
+            "令他们吃惊的是，那珍贵的包裹里面装的全是石头和沙子！"
+        ]
+    },
+    {
+        id: "2-8",
+        bookId: 2,
+        lessonNumber: 8,
+        title: "The best and the worst",
+        englishText: [
+            "Joe Sanders has the most beautiful garden in our town.",
+            "Nearly everybody enters for 'The Nicest Garden Competition' each year, but Joe wins every time.",
+            "Bill Frith's garden is larger than Joe's.",
+            "Bill works harder than Joe and grows more flowers and vegetables, but Joe's garden is more interesting.",
+            "He has made neat paths and has built a wooden bridge over a pool.",
+            "I like gardens too, but I do not like hard work.",
+            "Every year I enter for the garden competition too, and I always win a little prize for the worst garden in the town!"
+        ],
+        chineseText: [
+            "乔·桑德斯拥有我们镇上最漂亮的花园。",
+            "几乎每个人都参加每年举办的最佳花园比赛，而每次都是乔获胜。",
+            "比尔·弗里斯的花园比乔的花园大。",
+            "比尔比乔也更为勤奋，种植的花卉和蔬菜也更多，但乔的花园更富有情趣。",
+            "他修筑了一条条整洁的小路，并在一个池塘上架了一座小木桥。",
+            "我也喜欢花园，但我却不愿意辛勤劳动。",
+            "每年的花园比赛我也参加，不过我总是因镇上最劣的花园而获得一个小奖！"
+        ]
+    },
+    {
+        id: "2-9",
+        bookId: 2,
+        lessonNumber: 9,
+        title: "A cold welcome",
+        englishText: [
+            "On Wednesday evening, we went to the Town Hall.",
+            "It was the last day of the year and a large crowd of people had gathered under the Town Hall clock.",
+            "It would strike twelve in twenty minutes' time.",
+            "Fifteen minutes passed and then, at five to twelve, the clock stopped.",
+            "The big minute hand did not move.",
+            "We waited and waited, but nothing happened.",
+            "Suddenly someone shouted.",
+            "It's two minutes past twelve!",
+            "The clock has stopped!",
+            "I looked at my watch.",
+            "It was true.",
+            "The big clock refused to welcome the New Year.",
+            "At that moment, everybody began to laugh and sing."
+        ],
+        chineseText: [
+            "星期三的晚上，我们去了市政厅。",
+            "那是一年的最后一天，一大群人聚集在市政厅的大钟下面。",
+            "再过20分钟，大钟将敲响12下。",
+            "15分钟过去了，而就在11点55分时，大钟停了。",
+            "那根巨大的分针不动了。",
+            "我们等啊等啊，可情况没有变化。",
+            "突然有人喊道。",
+            "已经是12点零2分了！",
+            "那钟已经停了！",
+            "我看了看我的手表。",
+            "是这么回事。",
+            "那座大钟不愿意迎接新年。",
+            "此时，大家已经笑了起来，同时唱起了歌。"
+        ]
+    },
+    {
+        id: "2-10",
+        bookId: 2,
+        lessonNumber: 10,
+        title: "Not for jazz",
+        englishText: [
+            "We have an old musical instrument.",
+            "It is called a clavichord.",
+            "It was made in Germany in 1681.",
+            "Our clavichord is kept in the living-room.",
+            "It has belonged to our family for a long time.",
+            "The instrument was bought by my grandfather many years ago.",
+            "Recently it was damaged by a visitor.",
+            "She tried to play jazz on it!",
+            "She struck the keys too hard and two of the strings were broken.",
+            "My father was shocked.",
+            "Now we are not allowed to touch it.",
+            "It is being repaired by a friend of my father's."
+        ],
+        chineseText: [
+            "我们有一件古老的乐器。",
+            "叫击弦古钢琴。",
+            "它是1681年德国制造的。",
+            "我们这架钢琴放在起居室里。",
+            "我们家有这件乐器已经很久了。",
+            "是我祖父在很多年以前买的。",
+            "可它最近被一个客人碰坏了。",
+            "她试图用它来演奏爵士乐！",
+            "她在击键时用力过猛，弄坏了两根琴弦。",
+            "我父亲大为吃惊。",
+            "现在我们不允许碰这件乐器了。",
+            "父亲的一个朋友正在修理这件乐器。"
+        ]
+    },
+    {
+        id: "2-11",
+        bookId: 2,
+        lessonNumber: 11,
+        title: "One good turn deserves another",
+        englishText: [
+            "I was having dinner at a restaurant when Harry Steele came in.",
+            "Harry worked in a lawyer's office years ago, but he is now working at a bank.",
+            "He gets a good salary, but he always borrows money from his friends and never pays it back.",
+            "Harry saw me and came and sat at the same table.",
+            "He has never borrowed money from me.",
+            "While he was eating, I asked him to lend me 2 pounds.",
+            "To my surprise, he gave me the money immediately.",
+            "I have never borrowed any money from you, Harry said.",
+            "So now you can pay for my dinner!"
+        ],
+        chineseText: [
+            "我正在一家饭馆吃饭，托尼·斯提尔走了进来。",
+            "托尼曾在一家律师事务所工作，而现在正在一家银行上班。",
+            "他的薪水很高，但他却总是向朋友借钱，并且从来不还。",
+            "托尼看见了我，就走过来和我坐到一张桌子旁。",
+            "他从未向我借过钱。",
+            "当他吃饭时，我提出向他借2英镑。",
+            "令我惊奇的是，他立刻把钱给了我。",
+            "我还从未向你借过钱，托尼说道。",
+            "所以现在你可以替我付饭钱了！"
+        ]
+    },
+    {
+        id: "2-12",
+        bookId: 2,
+        lessonNumber: 12,
+        title: "Goodbye and good luck",
+        englishText: [
+            "Our neighbour, Captain Charles Alison, will sail from Portsmouth tomorrow.",
+            "We shall meet him at the harbour early in the morning.",
+            "He will be in his small boat, Topsail.",
+            "Topsail is a famous little boat.",
+            "It has sailed across the Atlantic many times.",
+            "Captain Alison will set out at eight o'clock, so we shall have plenty of time.",
+            "We shall see his boat and then we shall say goodbye to him.",
+            "He will be away for two months.",
+            "We are very proud of him.",
+            "He will take part in an important race across the Atlantic."
+        ],
+        chineseText: [
+            "我们的邻居查尔斯·艾利森船长明天就要从朴次茅斯启航了。",
+            "明天一大早我们将在码头为他送行。",
+            "他将乘坐他的涛波赛号小艇。",
+            "涛波赛号是艘有名的小艇。",
+            "它已经多次横渡大西洋。",
+            "艾利森船长将于8点钟启航，因此我们有充裕的时间。",
+            "我们将参观他的船，然后和他告别。",
+            "他要离开两个月。",
+            "我们真为他感到自豪。",
+            "他将参加一次重大的横渡大西洋的比赛。"
+        ]
+    },
+    {
+        id: "2-13",
+        bookId: 2,
+        lessonNumber: 13,
+        title: "The Greenwood Boys",
+        englishText: [
+            "The Greenwood Boys are a group of popular singers.",
+            "At present, they are visiting all parts of the country.",
+            "They will be arriving here tomorrow.",
+            "They will be coming by train and most of the young people in the town will be meeting them at the station.",
+            "Tomorrow evening they will be singing at the Workers' Club.",
+            "The Greenwood Boys will be staying for five days.",
+            "During this time, they will give five performances.",
+            "As usual, the police will have a difficult time.",
+            "They will be trying to keep order.",
+            "It is always the same on these occasions."
+        ],
+        chineseText: [
+            "绿林少年是一个流行歌曲演唱团。",
+            "目前他们正在全国各地巡回演出。",
+            "明天他们就要到达此地。",
+            "他们将乘火车来，镇上的大部分年轻人将到车站迎接他们。",
+            "明晚他们将在工人俱乐部演出。",
+            "绿林少年准备在此逗留5天。",
+            "在此期间，他们将演出5场。",
+            "同往常一样，警察的日子将不好过。",
+            "他们将设法维持秩序。",
+            "每逢这种场合，情况都是这样。"
+        ]
+    },
+    {
+        id: "2-14",
+        bookId: 2,
+        lessonNumber: 14,
+        title: "Do you speak English?",
+        englishText: [
+            "I had an amusing experience last year.",
+            "After I had left a small village in the south of France, I drove on to the next town.",
+            "On the way, a young man waved to me.",
+            "I stopped and he asked me for a lift.",
+            "As soon as he had got into the car, I said good morning to him in French and he replied in the same language.",
+            "Apart from a few words, I do not know any French at all.",
+            "Neither of us spoke during the journey.",
+            "I had nearly reached the town, when the young man suddenly said, very slowly, 'Do you speak English?'",
+            "As I soon learnt, he was English himself!"
+        ],
+        chineseText: [
+            "去年我有过一次有趣的经历。",
+            "在离开法国南部的一个小村庄后，我继续驶往下一个城镇。",
+            "途中，一个青年人向我招手。",
+            "我把车停下，他向我提出要求搭车。",
+            "他一上车，我就用法语向他问好，他也同样用法语回答我。",
+            "除了个别几个单词外，我根本不会法语。",
+            "旅途中我们谁也没讲话。",
+            "就要到达那个镇时，那青年突然开了口，慢慢地说道：你会讲英语吗？",
+            "我很快了解到，他自己就是个英国人！"
+        ]
+    },
+    {
+        id: "2-15",
+        bookId: 2,
+        lessonNumber: 15,
+        title: "Good news",
+        englishText: [
+            "The secretary told me that Mr. Harmsworth would see me.",
+            "I felt very nervous when I went into his office.",
+            "He did not look up from his desk when I entered.",
+            "After I had sat down, he said that business was very bad.",
+            "He told me that the firm could not afford to pay such large salaries.",
+            "Twenty people had already left.",
+            "I knew that my turn had come.",
+            "Mr. Harmsworth, I said in a weak voice.",
+            "Don't interrupt, he said.",
+            "Then he smiled and told me I would receive an extra thousand pounds a year!"
+        ],
+        chineseText: [
+            "秘书告诉我说哈姆斯沃斯先生要见我。",
+            "我走进他的办公室，感到非常紧张。",
+            "我进去的时候，他连头也没抬。",
+            "待我坐下后，他说生意非常不景气。",
+            "他还告诉我，公司支付不起这么庞大的工资开支。",
+            "有20个人已经离去。",
+            "我知道这次该轮到我了。",
+            "哈姆斯沃斯先生，我无力地说。",
+            "不要打断我的话，他说。",
+            "然后他笑了笑，告诉我说我每年将得到额外的1,000英镑收入！"
+        ]
+    },
+    {
+        id: "2-16",
+        bookId: 2,
+        lessonNumber: 16,
+        title: "A polite request",
+        englishText: [
+            "If you park your car in the wrong place, a traffic policeman will soon find it.",
+            "You will be very lucky if he lets you go without a ticket.",
+            "However, this does not always happen.",
+            "Traffic police are sometimes very polite.",
+            "During a holiday in Sweden, I found this note on my car: 'Sir, we welcome you to our city. This is a \"No Parking\" area. You will enjoy your stay here if you pay attention to our street signs. This note is only a reminder.'",
+            "If you receive a request like this, you cannot fail to obey it!"
+        ],
+        chineseText: [
+            "一旦你把汽车停错了地方，交警很快就会发现。",
+            "如果他没给你罚款单就放你走了，算你走运。",
+            "然而，情况并不总是这样。",
+            "交警有时也很客气。",
+            "有一次在瑞典度假，我发现我的车上有这样一个字条：先生，欢迎您光临我们的城市。此处是禁止停车区。如果您对我们街上的标牌稍加注意，您在此会过得很愉快的。谨此提请注意。",
+            "如果你收到这样的请求，你是不会不遵照执行的！"
+        ]
+    },
+    {
+        id: "2-17",
+        bookId: 2,
+        lessonNumber: 17,
+        title: "Always young",
+        englishText: [
+            "My aunt Jennifer is an actress.",
+            "She must be at least thirty-five years old.",
+            "In spite of this, she often appears on the stage as a young girl.",
+            "Jennifer will have to take part in a new play soon.",
+            "This time, she will be a girl of seventeen.",
+            "In the play, she must appear in a bright red dress and long black stockings.",
+            "Last year in another play, she had to wear short socks and a bright, orange-coloured dress.",
+            "If anyone ever asked her how old she is, she always answers, 'My dear, it must be terrible to be grown up!'"
+        ],
+        chineseText: [
+            "我的姨妈詹尼弗是个女演员。",
+            "她至少也有35岁了。",
+            "尽管如此，她却常在舞台上扮演小姑娘。",
+            "詹尼弗很快又要参加一个新剧的演出。",
+            "这一次，她将扮演一个17岁的少女。",
+            "演出时她必须穿一条鲜红色的裙子和黑色的长筒袜。",
+            "去年在演另一个剧时，她不得不穿短袜和一件鲜艳的橘红色的衣服。",
+            "一旦有人问起她有多大年纪，她总是回答：亲爱的，长成大人真可怕啊！"
+        ]
+    },
+    {
+        id: "2-18",
+        bookId: 2,
+        lessonNumber: 18,
+        title: "He often does this!",
+        englishText: [
+            "After I had had lunch at a village inn, I looked for my bag.",
+            "I had left it on a chair beside the door and now it wasn't there!",
+            "As I was looking for it, the inn-keeper came in.",
+            "Did you have a good meal? he asked.",
+            "Yes, thank you, I answered, but I can't pay the bill. I haven't got my bag.",
+            "The inn-keeper smiled and immediately went out.",
+            "In a few minutes he returned with my bag and gave it back to me.",
+            "I'm very sorry, he said.",
+            "My dog had taken it into the garden.",
+            "He often does this!"
+        ],
+        chineseText: [
+            "我在一个乡村小饭馆里吃了午饭，然后找我的提包。",
+            "我曾把它放在门边的椅子上，可这会儿不见了！",
+            "当我正在找它时，店主走了进来。",
+            "您吃得好吗？他问。",
+            "很好，谢谢。我回答，但我付不了帐。我的提包没有了。",
+            "店主笑了笑，马上走了出去。",
+            "几分钟后他拿着我的提包回来了，把它还给了我。",
+            "实在抱歉，他说。",
+            "我的狗把它弄到花园里去了。",
+            "他经常干这种事！"
+        ]
+    },
+    {
+        id: "2-19",
+        bookId: 2,
+        lessonNumber: 19,
+        title: "Sold out",
+        englishText: [
+            "The play may begin at any moment, I said.",
+            "It may have begun already, Susan answered.",
+            "I hurried to the ticket-office.",
+            "May I have two tickets please? I asked.",
+            "I'm sorry, we've sold out, the girl said.",
+            "What a pity! Susan exclaimed.",
+            "Just then, a man hurried to the ticket-office.",
+            "Can I return these two tickets? he asked.",
+            "Certainly, the girl said.",
+            "I went back to the ticket-office at once.",
+            "Could I have those two tickets please? I asked.",
+            "Certainly, the girl said.",
+            "But they are for next Wednesday's performance.",
+            "Do you still want them?",
+            "I might as well have them, I said sadly."
+        ],
+        chineseText: [
+            "剧马上就要开演了，我说。",
+            "也许已经开演了呢，苏珊回答道。",
+            "我匆匆赶到售票处。",
+            "我可以买两张票吗？我问。",
+            "对不起，票已售完，那姑娘说。",
+            "真可惜！苏珊大声说。",
+            "正在这时，一个男子匆匆奔向售票处。",
+            "我可以退掉这两张票吗？他问。",
+            "当然可以，那姑娘说。",
+            "我马上又回到售票处。",
+            "我可以买那两张票吗？我问。",
+            "当然可以，那姑娘说。",
+            "不过这两张是下星期三演出的票。",
+            "您还要吗？",
+            "我还是买下的好，我垂头丧气地说。"
+        ]
+    },
+    {
+        id: "2-20",
+        bookId: 2,
+        lessonNumber: 20,
+        title: "One man in a boat",
+        englishText: [
+            "Fishing is my favourite sport.",
+            "I often fish for hours without catching anything.",
+            "But this does not worry me.",
+            "Some fishermen are unlucky.",
+            "Instead of catching fish, they catch old boots and rubbish.",
+            "I am even less lucky.",
+            "I never catch anything-not even old boots.",
+            "After having spent whole mornings on the river, I always go home with an empty bag.",
+            "You must give up fishing! my friends say.",
+            "It's a waste of time.",
+            "But they don't realize one important thing.",
+            "I'm not really interested in fishing.",
+            "I am only interested in sitting in a boat and doing nothing at all!"
+        ],
+        chineseText: [
+            "钓鱼是我最喜欢的运动。",
+            "我经常一钓数小时却一无所获。",
+            "但我从不为此烦恼。",
+            "有些钓鱼的人运气不佳。",
+            "他们往往钓不到鱼，却钓到了旧靴子和垃圾。",
+            "我就更不走运了。",
+            "我啥也钓不到——连旧靴子也钓不到。",
+            "在河上待上整整一个上午后，我总是提着空袋子回家。",
+            "你得放弃钓鱼！我的朋友们说。",
+            "这是浪费时间。",
+            "但他们没认识到重要的一点。",
+            "我对钓鱼其实并不感兴趣。",
+            "我只是喜欢独坐舟中，无所事事而已！"
+        ]
+    },
+    {
+        id: "2-21",
+        bookId: 2,
+        lessonNumber: 21,
+        title: "Mad or not?",
+        englishText: [
+            "Aeroplanes are slowly driving me mad.",
+            "I live near an airport and passing planes can be heard night and day.",
+            "The airport was built during the war, but for some reason it could not be used then.",
+            "Last year, however, it came into use.",
+            "Over a hundred people must have been driven away from their homes by the noise.",
+            "I am one of the few people left.",
+            "Sometimes I think this house will be knocked down by a passing plane.",
+            "I have been offered a large sum of money to go away, but I am determined to stay here.",
+            "Everybody says I must be mad and they are probably right."
+        ],
+        chineseText: [
+            "飞机正在逐渐把我逼疯了。",
+            "我住在一个机场附近，过往飞机日夜不绝于耳。",
+            "机场是许多年前建的，但由于某种原因当时未能启用。",
+            "然而去年机场开始使用了。",
+            "有一百多人肯定是被噪音逼得已经弃家远去。",
+            "我是少数留下来的人中的一个。",
+            "有时我觉得这房子就要被一架飞过的飞机撞倒。",
+            "他们曾向我提供一大笔钱让我搬走，但我决定留在这儿。",
+            "大家都说我肯定是疯了，也许他们说的是对的。"
+        ]
+    },
+    {
+        id: "2-22",
+        bookId: 2,
+        lessonNumber: 22,
+        title: "A glass envelope",
+        englishText: [
+            "My daughter, Jane, never dreamed of receiving a letter from a girl of her own age in Holland.",
+            "Last year, we were travelling across the Channel and Jane put a piece of paper with her name and address on it into a bottle.",
+            "She threw the bottle into the sea.",
+            "She never thought of it again, but ten months later, she received a letter from a girl in Holland.",
+            "Both girls write to each other regularly now.",
+            "However, they have decided to use the post-office.",
+            "Letters will cost a little more, but they will certainly travel faster."
+        ],
+        chineseText: [
+            "我的女儿简从未想过会接到荷兰一位同龄姑娘的来信。",
+            "去年，当我们横渡英吉利海峡时，简把一张写有她姓名和地址的纸条塞进了一只瓶子里。",
+            "她把瓶子抛进了大海。",
+            "之后她再也没想过这件事，但10个月后，她收到了荷兰一位姑娘的来信。",
+            "现在这两个姑娘定期通信了。",
+            "然而，她们还是决定利用邮局。",
+            "这样虽然会稍微多花点钱，但肯定是快得多了。"
+        ]
+    },
+    {
+        id: "2-23",
+        bookId: 2,
+        lessonNumber: 23,
+        title: "A new house",
+        englishText: [
+            "I had a letter from my sister yesterday.",
+            "She lives in Nigeria.",
+            "In her letter, she said that she would come to England next year.",
+            "If she comes, she will get a surprise.",
+            "We are now living in a beautiful new house in the country.",
+            "Work on it had begun before my sister left.",
+            "The house was completed five months ago.",
+            "In my letter, I told her that she could stay with us.",
+            "The house has many large rooms and there is a lovely garden.",
+            "It is a very modern house, so it looks strange to some people.",
+            "It must be the only modern house in the district."
+        ],
+        chineseText: [
+            "昨天我收到了姐姐的一封信。",
+            "她住在尼日利亚。",
+            "她在信中说，她明年打算到英国来。",
+            "她要是来了，会感到意外的。",
+            "我们现在住在乡间一栋漂亮的新住宅里。",
+            "这栋房子在我姐姐离开之前就已动工了。",
+            "是在5个月以前竣工的。",
+            "我在信中告诉她，她可以和我们住在一起。",
+            "这栋房子有许多大房间，还有一个美丽的花园。",
+            "这是一栋非常现代化的住宅，因此在有些人看来很古怪。",
+            "它肯定是这个地区惟一的一栋现代化住宅。"
+        ]
+    },
+    {
+        id: "2-24",
+        bookId: 2,
+        lessonNumber: 24,
+        title: "It could be worse",
+        englishText: [
+            "I entered the hotel manager's office and sat down.",
+            "I had just lost £50 and I felt very upset.",
+            "I left the money in my room, I said, and it's not there now.",
+            "The manager was sympathetic, but he could do nothing.",
+            "Everyone's losing money these days, he said.",
+            "He started to complain about this wicked world but was interrupted by a knock at the door.",
+            "A girl came in and put an envelope on his desk.",
+            "It contained £50.",
+            "I found this outside this gentleman's room, she said.",
+            "Well, I said to the manager, there is still some honesty in this world!"
+        ],
+        chineseText: [
+            "我走进饭店经理的办公室，坐了下来。",
+            "我刚刚丢了50英镑，感到非常烦恼。",
+            "我把钱放在房间里，我说，可现在没了。",
+            "经理深表同情，但无能为力。",
+            "现在大家都在丢钱，他说。",
+            "他开始抱怨起这个邪恶的世道来，却被一阵敲门声打断了。",
+            "一个姑娘走了进来，把一个信封放在了他桌上。",
+            "里面装着50英镑。",
+            "这是我在这位先生的房门外捡到的，她说。",
+            "好吧，我对那位经理说，这世界上还是有诚实可言的！"
+        ]
+    },
+    {
+        id: "2-25",
+        bookId: 2,
+        lessonNumber: 25,
+        title: "The English Channel",
+        englishText: [
+            "Erna Hart is going to swim across the English Channel tomorrow.",
+            "She is going to set out from the French coast at five o'clock in the morning.",
+            "Erna is only fourteen years old and she hopes to set up a new world record.",
+            "She is a strong swimmer and many people feel that she is sure to succeed.",
+            "Erna's father will set out with her in a small boat.",
+            "Mr. Hart has trained his daughter for years.",
+            "Tomorrow he will be watching her anxiously as she swims the long distance to England.",
+            "Erna intends to take short rests every two hours.",
+            "She will have something to drink but she will not eat any solid food.",
+            "Most of Erna's school friends will be waiting for her on the English coast.",
+            "Among them will be Erna's mother, who swam the Channel herself when she was a girl."
+        ],
+        chineseText: [
+            "厄纳·哈特打算明天横渡英吉利海峡。",
+            "她打算早上5点钟从法国海岸出发。",
+            "厄纳只有14岁，她希望创一项新的世界纪录。",
+            "她是一个游泳能手，很多人认为她一定能成功。",
+            "厄纳的父亲将乘一条小船同她一道出发。",
+            "哈特先生训练他的女儿已经多年了。",
+            "明天他将焦急地注视着女儿游过这段漫长的距离到达英国。",
+            "厄纳计划每两个小时休息一会儿。",
+            "她将喝点儿东西，但不吃固体食物。",
+            "厄纳的大多数同学将在英国海岸等候她。",
+            "他们当中还会有厄纳的母亲，她自己年轻时也曾横渡英吉利海峡。"
+        ]
+    },
+    {
+        id: "2-26",
+        bookId: 2,
+        lessonNumber: 26,
+        title: "The best art critics",
+        englishText: [
+            "I am an art student and I paint a lot of pictures.",
+            "Many people pretend that they understand modern art.",
+            "They always tell you what a picture is 'about'.",
+            "Of course, many pictures are not 'about' anything.",
+            "They are just pretty patterns.",
+            "We like them in the same way that we like pretty curtain material.",
+            "I think that young children often appreciate modern pictures better than anyone else.",
+            "They notice more.",
+            "My sister is only seven, but she always tells me whether my pictures are good or not.",
+            "She came into my room yesterday.",
+            "What are you doing? she asked.",
+            "I'm hanging this picture on the wall, I answered.",
+            "It's a new one. Do you like it?",
+            "She looked at it critically for a moment.",
+            "It's all right, she said.",
+            "But isn't it upside down?",
+            "I looked at it again.",
+            "She was right! It was!"
+        ],
+        chineseText: [
+            "我是个学艺术的学生，画了很多画。",
+            "有很多人装成很懂现代艺术的样子。",
+            "总是告诉你一幅画是关于什么的。",
+            "当然，有很多画是什么意思也没有的。",
+            "它们就是些好看的图案。",
+            "我们喜爱它们就像我们喜欢漂亮的窗帘布一样。",
+            "我觉得小孩子们往往比任何人都更能欣赏现代绘画。",
+            "他们观察到的东西更多。",
+            "我的妹妹只有7岁，但她总能说出我的画是好还是坏。",
+            "昨天她到我房里来了。",
+            "你在干什么呢？她问。",
+            "我正把这幅画挂到墙上去，我答道。",
+            "这是幅新画。你喜欢吗？",
+            "她用挑剔的目光看了一会儿。",
+            "还可以吧，她说。",
+            "不过，是不是挂倒了？",
+            "我又看了看。",
+            "她是对的！真是挂倒了！"
+        ]
+    },
+    {
+        id: "2-27",
+        bookId: 2,
+        lessonNumber: 27,
+        title: "No parking",
+        englishText: [
+            "Jasper White is one of those rare people who believe in ancient myths.",
+            "He has just bought a new house in the city, but ever since he moved in, he has had trouble with motorists.",
+            "When he returns home at night, he always finds that someone has parked a car outside his gate.",
+            "Because of this, he has not been able to get his own car into his garage even once.",
+            "Jasper has put up 'No Parking' signs outside his gate, but these have not had any effect.",
+            "Now he has put an ugly stone head over the gate.",
+            "It is one of the ugliest faces I have ever seen.",
+            "I asked him what it was and he told me that it was Medusa, the Gorgon.",
+            "Jasper hopes that she will turn motorists to stone.",
+            "But none of them has been turned to stone yet!"
+        ],
+        chineseText: [
+            "贾斯珀·怀特是那些少有的相信古代神话的人之一。",
+            "他刚在城里买了一幢新房子，但自从搬进去后，便和汽车司机们打交道而不胜其烦。",
+            "当他夜里回到家时，总是发现有人把汽车停在他的门外。",
+            "为此，他甚至一次也没能把自己的车开进车库。",
+            "贾斯珀在大门外竖起了几面禁止停车的牌子，但这些都不起作用。",
+            "现在他把一个丑陋的石雕头像放在了大门上边。",
+            "这是我见过的最丑陋的头像之一。",
+            "我问他那是什么，他告诉我那是蛇发女怪美杜莎。",
+            "贾斯珀希望她会把汽车司机变成石头。",
+            "但到现在为止还没有一个人变成石头呢！"
+        ]
+    },
+    {
+        id: "2-28",
+        bookId: 2,
+        lessonNumber: 28,
+        title: "A wet night",
+        englishText: [
+            "Late in the afternoon, the boys put up their tent in the middle of a field.",
+            "As soon as this was done, they cooked a meal over an open fire.",
+            "They were all hungry and the food smelled good.",
+            "After a wonderful meal, they told stories and sang songs by the campfire.",
+            "But some time later it began to rain.",
+            "The boys felt tired so they put out the fire and crept into their tent.",
+            "Their sleeping bags were warm and comfortable, so they all slept soundly.",
+            "In the middle of the night, two boys woke up and began shouting.",
+            "The tent was full of water!",
+            "They all leapt out of their sleeping bags and hurried outside.",
+            "It was raining heavily and they found that a stream had formed in the field.",
+            "The stream wound its way across the field and then flowed right under their tent!"
+        ],
+        chineseText: [
+            "傍晚时分，孩子们在田野中央搭起了帐篷。",
+            "这件事刚刚做完，他们就在篝火上做起了饭。",
+            "他们全都饿了，饭菜散发出阵阵香味。",
+            "他们美美地吃了一顿饭后，就围在营火旁讲起了故事，唱起了歌。",
+            "但过了一阵，天下起雨来。",
+            "孩子们感到累了，所以他们扑灭了火，爬进了帐篷。",
+            "他们的睡袋既暖和又舒服，因此都睡得很熟。",
+            "午夜前后，有两个孩子醒了，大声叫了起来。",
+            "原来帐篷里到处都是水！",
+            "他们全都跳出睡袋，跑到外面。",
+            "雨下得很大，他们发现地上已经形成了一条小溪。",
+            "那小溪弯弯曲曲穿过田野，然后正好从他们的帐篷底下流了过去！"
+        ]
+    },
+    {
+        id: "2-29",
+        bookId: 2,
+        lessonNumber: 29,
+        title: "Taxi!",
+        englishText: [
+            "Captain Ben Fawcett has bought an unusual taxi and has begun a new service.",
+            "The 'taxi' is a small Swiss aeroplane called a 'Pilatus Porter'.",
+            "This wonderful plane can carry seven passengers.",
+            "The most surprising thing about it, however, is that it can land anywhere: on snow, water, or even on a ploughed field.",
+            "Captain Fawcett's first passenger was a doctor who flew from Birmingham to a lonely village in the Welsh mountains.",
+            "Since then, Captain Fawcett has flown passengers to many unusual places.",
+            "Once he landed on the roof of a block of flats and on another occasion, he landed in a deserted car park.",
+            "Captain Fawcett has just refused a strange request from a businessman.",
+            "The man wanted to fly to Rockall, a lonely island in the Atlantic Ocean, but Captain Fawcett did not take him because the trip was too dangerous."
+        ],
+        chineseText: [
+            "本·弗西特机长买了一辆不同寻常的出租汽车，并开始了一项新的业务。",
+            "这辆出租汽车是一架小型瑞士飞机，叫皮勒特斯·波特号。",
+            "这架奇妙的飞机可以载7名乘客。",
+            "然而，最令人惊奇的是它能够在任何地方降落：雪地上、水面上，甚至刚耕过的田里。",
+            "弗西特机长的第一位乘客是一位医生，他从伯明翰飞往威尔士山区一个偏僻的村庄。",
+            "从那以后，弗西特机长已载送乘客到过许多不寻常的地方。",
+            "一次他把飞机降落在了一栋公寓楼的屋顶上，还有一次，降落在了一个废弃的停车场上。",
+            "弗西特机长刚刚拒绝了一位商人的奇怪请求。",
+            "这个人想要飞往大西洋上的一个孤岛——罗卡尔岛，但弗西特机长之所以不送他去，是因为那段飞行太危险了。"
+        ]
+    },
+    {
+        id: "2-30",
+        bookId: 2,
+        lessonNumber: 30,
+        title: "Football or polo?",
+        englishText: [
+            "The Wayle is a small river that cuts across the park near my home.",
+            "I like sitting by the Wayle on fine afternoons.",
+            "It was warm last Sunday, so I went and sat on the river bank as usual.",
+            "Some children were playing games on the bank and there were some people rowing on the river.",
+            "Suddenly, one of the children kicked a ball very hard and it went towards a passing boat.",
+            "Some people on the bank called out to the man in the boat, but he did not hear them.",
+            "The ball struck him so hard that he nearly fell into the water.",
+            "I turned to look at the children, but there weren't any in sight: they had all run away!",
+            "The man laughed when he realized what had happened.",
+            "He called out to the children and threw the ball back to the bank."
+        ],
+        chineseText: [
+            "威尔河是一条小河，它穿过我家附近的公园。",
+            "我喜欢在晴朗的下午坐在威尔河边上。",
+            "上星期日天气很暖和，于是我又和往常一样来到河畔坐下。",
+            "有几个孩子在河岸上玩耍，还有几个人在河上划船。",
+            "突然，有一个孩子狠狠地踢了一脚球，球便朝着一只驶过的小船飞去。",
+            "岸上的一些人对着小船上的人高喊，但他没听见。",
+            "球重重地砸在他身上，使他差点儿落入水中。",
+            "我转过头去看那些孩子，但一个也不见，他们都跑了！",
+            "当那个人明白了是怎么回事后，笑了起来。",
+            "他大声叫着那些孩子，把球扔回到岸上。"
         ]
     }
 ];
