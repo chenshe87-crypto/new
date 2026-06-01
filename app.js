@@ -6,12 +6,9 @@ let randomChallengeQuestions = [];
 let practiceSource = null;
 
 function scrollToTop() {
-    if ('scrollBehavior' in document.documentElement.style) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-    }
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo(0, 0);
 }
 
 function saveMistakes(newMistakes) {
@@ -377,6 +374,10 @@ function initTranslationPage(lessonId) {
 
     currentLessonId = lessonId;
     currentBookId = lesson.bookId;
+    
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo(0, 0);
 
     const lessonTitleDiv = document.getElementById('translation-lesson-title');
     lessonTitleDiv.innerHTML = '<span class="lesson-number">Lesson ' + lesson.lessonNumber + '</span> - ' + lesson.title;
@@ -550,6 +551,10 @@ function initDictationPage(lessonId) {
 
     currentLessonId = lessonId;
     currentBookId = lesson.bookId;
+    
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo(0, 0);
 
     const lessonTitleDiv = document.getElementById('dictation-lesson-title');
     lessonTitleDiv.innerHTML = '<span class="lesson-number">Lesson ' + lesson.lessonNumber + '</span> - ' + lesson.title;
@@ -824,6 +829,10 @@ function highlightCorrectAnswer(userInput, correctAnswer) {
 }
 
 function initRandomPage() {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo(0, 0);
+    
     const selectGrid = document.getElementById('random-lesson-select');
     selectGrid.innerHTML = '';
     
@@ -1387,6 +1396,10 @@ let mistakesChallengeQuestions = [];
 let mistakesChallengeCorrectIds = [];
 
 function startMistakesChallenge() {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo(0, 0);
+    
     const allMistakes = getMistakes();
     if (allMistakes.length === 0) {
         alert('暂无错题记录，继续加油！');
