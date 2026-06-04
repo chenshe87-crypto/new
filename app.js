@@ -16,6 +16,28 @@ function saveMistakes(newMistakes) {
     saveUserData();
 }
 
+function addMistake(mistake) {
+    const exists = mistakes.find(m =>
+        m.lessonId === mistake.lessonId &&
+        m.chinese === mistake.chinese
+    );
+    if (!exists) {
+        mistake.id = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9);
+        mistake.addedAt = new Date().toISOString();
+        mistake.successCount = 0;
+        mistake.wrongCount = 1;
+        mistakes.unshift(mistake);
+        saveUserData();
+        return;
+    }
+
+    exists.wrongCount = (exists.wrongCount || 1) + 1;
+    exists.successCount = 0;
+    exists.addedAt = new Date().toISOString();
+    exists.userAnswer = mistake.userAnswer;
+    saveUserData();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     checkLogin();
 });
@@ -27,20 +49,37 @@ function checkLogin() {
         initHomePage();
         navigate('home');
     } else {
-        navigate('login');
+        updateNavUser();
+        initHomePage();
+        navigate('home');
     }
 }
 
 function updateNavUser() {
     const navUser = document.getElementById('navUser');
     const userName = document.getElementById('userName');
+    const loginBtn = document.getElementById('loginNavBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
     if (!navUser || !userName) return;
     if (currentUser) {
         navUser.style.display = 'flex';
         userName.textContent = currentUser.username;
+        if (loginBtn) loginBtn.classList.add('hidden');
+        if (logoutBtn) logoutBtn.classList.remove('hidden');
     } else {
-        navUser.style.display = 'none';
+        navUser.style.display = 'flex';
+        userName.textContent = '游客模式';
+        if (loginBtn) loginBtn.classList.remove('hidden');
+        if (logoutBtn) logoutBtn.classList.add('hidden');
     }
+}
+
+function requireLogin(actionName) {
+    if (currentUser) return true;
+    const message = actionName ? actionName + '需要先登录，用于保存学习记录和错题。' : '请先登录后继续。';
+    alert(message);
+    navigate('login');
+    return false;
 }
 
 function switchAuthTab(tab) {
@@ -116,14 +155,15 @@ function register() {
 function logout() {
     logoutUser();
     updateNavUser();
-    navigate('login');
+    navigate('home');
 }
 
 let pageHistory = [];
 
 function navigate(page, data = null) {
-    if (page !== 'login' && !currentUser) {
-        navigate('login');
+    const publicPages = ['home', 'course', 'login'];
+    if (!currentUser && !publicPages.includes(page)) {
+        requireLogin();
         return;
     }
     
@@ -245,7 +285,15 @@ function goBackFromPractice() {
     navigate('course', { bookId: currentBookId });
 }
 
+function startPractice(type, lessonId) {
+    const label = type === 'translation' ? '翻译挑战' : '默写挑战';
+    if (!requireLogin(label)) return;
+    navigate(type, { lessonId: lessonId });
+}
+
 function initHomePage() {
+    renderDashboard();
+
     const coursesGrid = document.getElementById('courses-grid');
     coursesGrid.innerHTML = '';
 
@@ -274,6 +322,76 @@ function initHomePage() {
             '</div>';
         coursesGrid.appendChild(card);
     });
+}
+
+function renderDashboard() {
+    const dashboard = document.getElementById('dashboard-grid');
+    if (!dashboard) return;
+
+    const totalLessons = books.reduce((sum, book) => sum + book.lessons, 0);
+    const availableLessons = lessons.length;
+
+    if (!currentUser) {
+        dashboard.innerHTML =
+            '<div class="dashboard-card dashboard-primary">' +
+                '<div class="dashboard-label">今日继续学习</div>' +
+                '<div class="dashboard-title">先浏览课程，再开始记录</div>' +
+                '<div class="dashboard-meta">当前可预览 ' + availableLessons + ' / ' + totalLessons + ' 篇课文</div>' +
+            '</div>' +
+            '<div class="dashboard-card">' +
+                '<div class="dashboard-label">最近练习</div>' +
+                '<div class="dashboard-title">登录后自动保存</div>' +
+                '<div class="dashboard-meta">记录翻译、默写和随机挑战成绩</div>' +
+            '</div>' +
+            '<div class="dashboard-card">' +
+                '<div class="dashboard-label">错题数量</div>' +
+                '<div class="dashboard-title">0 题</div>' +
+                '<div class="dashboard-meta">登录后建立个人错题集</div>' +
+            '</div>';
+        return;
+    }
+
+    const latestRecord = history[0];
+    const latestLesson = latestRecord ? lessons.find(l => l.id === latestRecord.lessonId) : null;
+    const latestTitle = latestRecord
+        ? (latestRecord.lessonId === 'random' ? '随机挑战' : (latestLesson ? 'Lesson ' + latestLesson.lessonNumber + ': ' + latestLesson.title : '未知课程'))
+        : '还没有练习记录';
+    const latestType = latestRecord ? getPracticeTypeText(latestRecord.type) + ' · ' + latestRecord.score + '分' : '完成一次挑战后会显示在这里';
+    const nextLesson = latestLesson ? getNextLessonId(latestLesson.id) : (lessons[0] ? lessons[0].id : null);
+    const nextLessonData = nextLesson ? lessons.find(l => l.id === nextLesson) : lessons[0];
+    const continueTitle = nextLessonData ? 'Lesson ' + nextLessonData.lessonNumber + ': ' + nextLessonData.title : '选择一门课程开始';
+
+    dashboard.innerHTML =
+        '<div class="dashboard-card dashboard-primary" data-book-id="' + (nextLessonData ? nextLessonData.bookId : '') + '">' +
+            '<div class="dashboard-label">今日继续学习</div>' +
+            '<div class="dashboard-title">' + continueTitle + '</div>' +
+            '<div class="dashboard-meta">点击进入课程列表继续学习</div>' +
+        '</div>' +
+        '<div class="dashboard-card">' +
+            '<div class="dashboard-label">最近练习</div>' +
+            '<div class="dashboard-title">' + latestTitle + '</div>' +
+            '<div class="dashboard-meta">' + latestType + '</div>' +
+        '</div>' +
+        '<div class="dashboard-card">' +
+            '<div class="dashboard-label">错题数量</div>' +
+            '<div class="dashboard-title">' + mistakes.length + ' 题</div>' +
+            '<div class="dashboard-meta">其中 ' + mistakes.filter(m => (m.successCount || 0) === 1).length + ' 题已连续答对 1 次</div>' +
+        '</div>';
+
+    const continueCard = dashboard.querySelector('[data-book-id]');
+    if (continueCard && continueCard.dataset.bookId) {
+        continueCard.onclick = () => navigate('course', { bookId: parseInt(continueCard.dataset.bookId) });
+    }
+}
+
+function getPracticeTypeText(type) {
+    const labels = {
+        translation: '翻译挑战',
+        dictation: '默写挑战',
+        'random-translation': '随机翻译',
+        'random-dictation': '随机默写'
+    };
+    return labels[type] || '练习';
 }
 
 function initCoursePage(bookId) {
@@ -359,17 +477,19 @@ function showLessonDetail(lessonId) {
             '<div class="text-content">' + chineseText + '</div>' +
         '</div>' +
         '<div class="practice-actions">' +
-            '<button class="btn btn-translation" onclick="navigate(\'translation\', { lessonId: \'' + lesson.id + '\' })">' +
+            '<button class="btn btn-translation" onclick="startPractice(\'translation\', \'' + lesson.id + '\')">' +
                 '<i class="fas fa-language"></i> 翻译挑战' +
             '</button>' +
-            '<button class="btn btn-dictation" onclick="navigate(\'dictation\', { lessonId: \'' + lesson.id + '\' })">' +
+            '<button class="btn btn-dictation" onclick="startPractice(\'dictation\', \'' + lesson.id + '\')">' +
                 '<i class="fas fa-pencil-alt"></i> 默写挑战' +
             '</button>' +
         '</div>';
     
-    setTimeout(() => {
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }, 100);
+    if (window.innerWidth < 900) {
+        setTimeout(() => {
+            lessonDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    }
 }
 
 function initTranslationPage(lessonId) {
@@ -1355,9 +1475,16 @@ function initMistakesPage() {
             });
             
             const isTranslation = mistake.userAnswer === '需要查看答案' || mistake.userAnswer === '查看译文';
+            const wrongCount = mistake.wrongCount || 1;
+            const successCount = mistake.successCount || 0;
+            const statusText = '错 ' + wrongCount + ' 次 · 已连续答对 ' + successCount + ' 次';
+            const statusClass = successCount > 0 ? 'mistake-status warming' : 'mistake-status';
             return '<div class="mistake-item ' + (isTranslation ? 'mistake-translation' : 'mistake-dictation') + '">' +
                 '<div class="mistake-header">' +
-                    '<div class="mistake-lesson">' + (lesson ? 'Lesson ' + lesson.lessonNumber : '随机练习') + '</div>' +
+                    '<div>' +
+                        '<div class="mistake-lesson">' + (lesson ? 'Lesson ' + lesson.lessonNumber : '随机练习') + '</div>' +
+                        '<div class="' + statusClass + '">' + statusText + '</div>' +
+                    '</div>' +
                     '<div class="mistake-date">' + dateStr + '</div>' +
                     '<button class="btn-delete" onclick="deleteMistake(\'' + mistake.id + '\')">' +
                         '<i class="fas fa-trash"></i>' +

@@ -5767,7 +5767,14 @@ function addMistake(mistake) {
         mistake.id = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9);
         mistake.addedAt = new Date().toISOString();
         mistake.successCount = 0;
+        mistake.wrongCount = 1;
         mistakes.unshift(mistake);
+        saveUserData();
+    } else {
+        exists.wrongCount = (exists.wrongCount || 1) + 1;
+        exists.successCount = 0;
+        exists.addedAt = new Date().toISOString();
+        exists.userAnswer = mistake.userAnswer;
         saveUserData();
     }
 }
