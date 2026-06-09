@@ -392,6 +392,47 @@ body {
     background-color: #a78bfa;
 }
 
+.audio-dot {
+    color: var(--accent);
+    font-size: 0.82rem;
+    margin-left: 0.35rem;
+    white-space: nowrap;
+}
+
+.sentence-header-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.sentence-audio-btn {
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(249, 115, 22, 0.22);
+    border-radius: 999px;
+    background: rgba(249, 115, 22, 0.1);
+    color: #9a3412;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 0 0 auto;
+}
+
+.sentence-audio-btn:hover,
+.sentence-audio-btn.is-playing {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.sentence-audio-btn.is-playing {
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.18);
+}
+
 .btn-secondary:hover {
     background: var(--border);
 }
@@ -526,6 +567,78 @@ body {
     font-size: 0.95rem;
 }
 
+.audio-panel {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffffff 100%);
+    border: 1px solid rgba(249, 115, 22, 0.2);
+    border-radius: 0.75rem;
+    padding: 1.1rem;
+    margin-bottom: 1.75rem;
+}
+
+.audio-panel-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 0.85rem;
+}
+
+.audio-label {
+    color: #9a3412;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.audio-title {
+    color: var(--text-light);
+    font-size: 0.92rem;
+}
+
+.audio-lyrics-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #9a3412;
+    background: rgba(249, 115, 22, 0.1);
+    border: 1px solid rgba(249, 115, 22, 0.18);
+    border-radius: 0.5rem;
+    padding: 0.45rem 0.7rem;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.audio-lyrics-link:hover {
+    background: rgba(249, 115, 22, 0.18);
+}
+
+.lesson-audio {
+    width: 100%;
+    display: block;
+}
+
+.audio-only-note {
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    line-height: 1.8;
+    padding: 1rem;
+}
+
+.audio-only-note i {
+    color: var(--accent);
+    font-size: 1.2rem;
+}
+
 .text-block {
     margin-bottom: 2rem;
 }
@@ -548,6 +661,30 @@ body {
 .text-content.en {
     font-family: 'Playfair Display', serif;
     font-size: 1.1rem;
+}
+
+.study-content {
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.study-line {
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1.75;
+    padding: 0.2rem 0;
+}
+
+.study-heading {
+    color: var(--primary-dark);
+    font-weight: 700;
+    margin-top: 0.75rem;
+}
+
+.study-line:first-child {
+    margin-top: 0;
 }
 
 .practice-actions {

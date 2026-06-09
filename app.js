@@ -40,17 +40,14 @@ function addMistake(mistake) {
 
 document.addEventListener('DOMContentLoaded', function() {
     checkLogin();
+    window.addEventListener('hashchange', handleHashRoute);
 });
 
 function checkLogin() {
     loadUserData();
-    if (currentUserId && currentUser) {
-        updateNavUser();
-        initHomePage();
-        navigate('home');
-    } else {
-        updateNavUser();
-        initHomePage();
+    updateNavUser();
+    initHomePage();
+    if (!handleHashRoute()) {
         navigate('home');
     }
 }
@@ -159,6 +156,54 @@ function logout() {
 }
 
 let pageHistory = [];
+
+function parseHashRoute() {
+    const rawHash = window.location.hash.replace(/^#\/?/, '').trim();
+    if (!rawHash) return null;
+
+    const parts = rawHash.split('/').map(part => decodeURIComponent(part));
+    const page = parts[0];
+    const value = parts[1];
+
+    if (page === 'home' || page === 'random' || page === 'mistakes' || page === 'history' || page === 'login') {
+        return { page };
+    }
+    if (page === 'course' && value) {
+        const bookId = parseInt(value, 10);
+        return Number.isNaN(bookId) ? null : { page, bookId };
+    }
+    if ((page === 'lesson' || page === 'translation' || page === 'dictation') && value) {
+        return { page, lessonId: value };
+    }
+    return null;
+}
+
+function handleHashRoute() {
+    const route = parseHashRoute();
+    if (!route) return false;
+
+    if (route.bookId) {
+        navigate('course', { bookId: route.bookId });
+        return true;
+    }
+
+    if (route.lessonId) {
+        const lesson = lessons.find(l => l.id === route.lessonId);
+        if (!lesson) return false;
+
+        if (route.page === 'lesson') {
+            navigate('course', { bookId: lesson.bookId });
+            showLessonDetail(lesson.id);
+            return true;
+        }
+
+        navigate(route.page, { lessonId: lesson.id });
+        return true;
+    }
+
+    navigate(route.page);
+    return true;
+}
 
 function navigate(page, data = null) {
     const publicPages = ['home', 'course', 'login'];
@@ -291,6 +336,127 @@ function startPractice(type, lessonId) {
     navigate(type, { lessonId: lessonId });
 }
 
+function padLessonNumber(num) {
+    return String(num).padStart(3, '0');
+}
+
+function getNce1AudioRange(lessonNumber) {
+    const start = lessonNumber % 2 === 0 ? lessonNumber - 1 : lessonNumber;
+    const end = start + 1;
+    return {
+        start: padLessonNumber(start),
+        end: padLessonNumber(end)
+    };
+}
+
+function getLessonAudio(bookId, lessonNumber) {
+    if (bookId !== 1 || lessonNumber < 1 || lessonNumber > 144 || lessonNumber % 2 === 0) return null;
+
+    const range = getNce1AudioRange(lessonNumber);
+    const basePath = 'assets/audio/nce1-us/lesson-' + range.start + '-' + range.end;
+    return {
+        label: 'Lesson ' + range.start + ' 美音',
+        mp3: basePath + '.mp3',
+        lrc: basePath + '.lrc'
+    };
+}
+
+function renderAudioPlayer(audio) {
+    if (!audio) return '';
+
+    return '<div class="audio-panel">' +
+        '<div class="audio-panel-header">' +
+            '<div>' +
+                '<div class="audio-label"><i class="fas fa-volume-up"></i> 美音朗读</div>' +
+                '<div class="audio-title">' + audio.label + '</div>' +
+            '</div>' +
+            '<a class="audio-lyrics-link" href="' + audio.lrc + '" download>' +
+                '<i class="fas fa-align-left"></i> LRC' +
+            '</a>' +
+        '</div>' +
+        '<audio class="lesson-audio" controls preload="metadata" src="' + audio.mp3 + '">' +
+            '当前浏览器不支持音频播放。' +
+        '</audio>' +
+    '</div>';
+}
+
+let sentenceAudioPlayer = null;
+let sentenceAudioStopTimer = null;
+
+function getSentenceAudioSegment(lessonId, sentenceIndex) {
+    if (typeof nce1SentenceAudio === 'undefined') return null;
+    if (!nce1SentenceAudio[lessonId]) return null;
+    return nce1SentenceAudio[lessonId][sentenceIndex] || null;
+}
+
+function renderSentenceAudioButton(lessonId, sentenceIndex) {
+    if (!getSentenceAudioSegment(lessonId, sentenceIndex)) return '';
+
+    return '<button type="button" class="sentence-audio-btn" title="播放本句美音" aria-label="播放本句美音" onclick="playSentenceAudio(\'' + lessonId + '\', ' + sentenceIndex + ', this)">' +
+        '<i class="fas fa-volume-up"></i>' +
+    '</button>';
+}
+
+function clearSentenceAudioState() {
+    if (sentenceAudioStopTimer) {
+        clearTimeout(sentenceAudioStopTimer);
+        sentenceAudioStopTimer = null;
+    }
+    document.querySelectorAll('.sentence-audio-btn.is-playing').forEach(button => {
+        button.classList.remove('is-playing');
+    });
+}
+
+function stopSentenceAudio() {
+    clearSentenceAudioState();
+    if (sentenceAudioPlayer) {
+        sentenceAudioPlayer.pause();
+        sentenceAudioPlayer.ontimeupdate = null;
+        sentenceAudioPlayer.onended = null;
+    }
+}
+
+function playSentenceAudio(lessonId, sentenceIndex, button) {
+    const lesson = lessons.find(l => l.id === lessonId);
+    const segment = getSentenceAudioSegment(lessonId, sentenceIndex);
+    const audio = lesson ? getLessonAudio(lesson.bookId, lesson.lessonNumber) : null;
+    if (!lesson || !segment || !audio) return;
+
+    if (!sentenceAudioPlayer) {
+        sentenceAudioPlayer = new Audio();
+    }
+
+    stopSentenceAudio();
+    sentenceAudioPlayer.src = audio.mp3;
+    sentenceAudioPlayer.currentTime = segment.start;
+    sentenceAudioPlayer.ontimeupdate = () => {
+        if (sentenceAudioPlayer.currentTime >= segment.end) {
+            stopSentenceAudio();
+        }
+    };
+    sentenceAudioPlayer.onended = stopSentenceAudio;
+
+    if (button) {
+        button.classList.add('is-playing');
+    }
+
+    sentenceAudioPlayer.play().catch(() => {
+        stopSentenceAudio();
+        alert('音频暂时无法播放，请稍后再试。');
+    });
+
+    sentenceAudioStopTimer = setTimeout(stopSentenceAudio, Math.max(1, segment.end - segment.start + 0.25) * 1000);
+}
+
+function findLessonSentenceIndex(lessonId, englishText) {
+    const lesson = lessons.find(l => l.id === lessonId);
+    if (!lesson) return -1;
+
+    const englishTexts = Array.isArray(lesson.englishText) ? lesson.englishText : [lesson.englishText];
+    const target = normalizeText(englishText || '');
+    return englishTexts.findIndex(text => normalizeText(text) === target);
+}
+
 function initHomePage() {
     renderDashboard();
 
@@ -407,6 +573,7 @@ function initCoursePage(bookId) {
 
     for (let i = 1; i <= book.lessons; i++) {
         const lesson = bookLessons.find(l => l.lessonNumber === i);
+        const audio = getLessonAudio(bookId, i);
         const item = document.createElement('div');
         item.className = 'lesson-item ' + (i % 2 === 1 ? 'lesson-odd' : 'lesson-even');
         
@@ -422,8 +589,11 @@ function initCoursePage(bookId) {
         }
         
         if (lesson) {
-            item.innerHTML = badges + 'Lesson ' + i + ': ' + lesson.title;
+            item.innerHTML = badges + 'Lesson ' + i + ': ' + lesson.title + (audio ? ' <span class="audio-dot"><i class="fas fa-volume-up"></i></span>' : '');
             item.onclick = () => showLessonDetail(lesson.id);
+        } else if (audio) {
+            item.innerHTML = badges + 'Lesson ' + i + ' <span class="audio-dot"><i class="fas fa-volume-up"></i></span>';
+            item.onclick = () => showAudioOnlyLesson(bookId, i);
         } else {
             item.innerHTML = badges + 'Lesson ' + i;
             item.style.opacity = '0.5';
@@ -436,6 +606,68 @@ function initCoursePage(bookId) {
             '<i class="fas fa-hand-pointer"></i>' +
             '<p>请从左侧选择一篇课文开始学习</p>' +
         '</div>';
+}
+
+function showAudioOnlyLesson(bookId, lessonNumber) {
+    const book = books.find(b => b.id === bookId);
+    const audio = getLessonAudio(bookId, lessonNumber);
+    if (!book || !audio) return;
+
+    const lessonItems = document.querySelectorAll('.lesson-item');
+    lessonItems.forEach((item, index) => {
+        item.classList.remove('active');
+        if (lessonNumber === index + 1) {
+            item.classList.add('active');
+        }
+    });
+
+    currentBookId = bookId;
+    currentLessonId = null;
+
+    const lessonDetail = document.getElementById('lesson-detail');
+    lessonDetail.innerHTML =
+        '<div class="lesson-detail-header">' +
+            '<div class="lesson-detail-title">Lesson ' + lessonNumber + '</div>' +
+            '<div class="lesson-detail-meta">' +
+                '<i class="fas fa-book"></i> ' + book.title +
+            '</div>' +
+        '</div>' +
+        renderAudioPlayer(audio) +
+        '<div class="audio-only-note">' +
+            '<i class="fas fa-headphones"></i>' +
+            '<p>这课暂未录入课文文本，可以先用本地美音音频跟读和听写。</p>' +
+        '</div>';
+
+    if (window.innerWidth < 900) {
+        setTimeout(() => {
+            lessonDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    }
+}
+
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function renderStudyText(lines) {
+    if (!Array.isArray(lines) || !lines.length) return '';
+
+    const headingPattern = /^(听力原文|重点讲解|Written exercises|New words|New words and expressions|Exercises|Examples?|Example|[ABC]\b)/i;
+
+    return '<div class="text-block study-text-block">' +
+        '<h3><i class="fas fa-book-open"></i> 课文与练习</h3>' +
+        '<div class="study-content">' +
+            lines.map(line => {
+                const className = headingPattern.test(line) ? 'study-line study-heading' : 'study-line';
+                return '<div class="' + className + '">' + escapeHtml(line) + '</div>';
+            }).join('') +
+        '</div>' +
+    '</div>';
 }
 
 function showLessonDetail(lessonId) {
@@ -453,12 +685,24 @@ function showLessonDetail(lessonId) {
     currentLessonId = lessonId;
 
     const book = books.find(b => b.id === lesson.bookId);
+    const audio = getLessonAudio(lesson.bookId, lesson.lessonNumber);
     
     const englishTexts = Array.isArray(lesson.englishText) ? lesson.englishText : [lesson.englishText];
     const chineseTexts = Array.isArray(lesson.chineseText) ? lesson.chineseText : [lesson.chineseText];
+    const studyText = Array.isArray(lesson.studyText) ? lesson.studyText : [];
     
     const englishText = englishTexts.join(' ');
     const chineseText = chineseTexts.join(' ');
+    const lessonTextHtml = studyText.length
+        ? renderStudyText(studyText)
+        : '<div class="text-block">' +
+            '<h3><i class="fas fa-language"></i> 英文原文</h3>' +
+            '<div class="text-content en">' + englishText + '</div>' +
+        '</div>' +
+        '<div class="text-block">' +
+            '<h3><i class="fas fa-globe"></i> 中文翻译</h3>' +
+            '<div class="text-content">' + chineseText + '</div>' +
+        '</div>';
 
     const lessonDetail = document.getElementById('lesson-detail');
     lessonDetail.innerHTML = 
@@ -468,14 +712,8 @@ function showLessonDetail(lessonId) {
                 '<i class="fas fa-book"></i> ' + (book ? book.title : '') +
             '</div>' +
         '</div>' +
-        '<div class="text-block">' +
-            '<h3><i class="fas fa-language"></i> 英文原文</h3>' +
-            '<div class="text-content en">' + englishText + '</div>' +
-        '</div>' +
-        '<div class="text-block">' +
-            '<h3><i class="fas fa-globe"></i> 中文翻译</h3>' +
-            '<div class="text-content">' + chineseText + '</div>' +
-        '</div>' +
+        renderAudioPlayer(audio) +
+        lessonTextHtml +
         '<div class="practice-actions">' +
             '<button class="btn btn-translation" onclick="startPractice(\'translation\', \'' + lesson.id + '\')">' +
                 '<i class="fas fa-language"></i> 翻译挑战' +
@@ -513,7 +751,10 @@ function initTranslationPage(lessonId) {
     container.innerHTML = englishTexts.map((english, index) => {
         return '<div class="translation-sentence-item" data-index="' + index + '">' +
             '<div class="translation-sentence-header">' +
-                '<span class="sentence-number">第 ' + (index + 1) + ' 句</span>' +
+                '<div class="sentence-header-left">' +
+                    '<span class="sentence-number">第 ' + (index + 1) + ' 句</span>' +
+                    renderSentenceAudioButton(lesson.id, index) +
+                '</div>' +
                 '<label class="translation-toggle">' +
                     '<input type="checkbox" id="toggle-' + index + '" onchange="toggleTranslation(' + index + ')">' +
                     '<span>译文</span>' +
@@ -690,7 +931,10 @@ function initDictationPage(lessonId) {
     container.innerHTML = chineseTexts.map((chinese, index) => {
         return '<div class="dictation-sentence-item" data-index="' + index + '">' +
             '<div class="dictation-sentence-header">' +
-                '<span class="sentence-number">第 ' + (index + 1) + ' 句</span>' +
+                '<div class="sentence-header-left">' +
+                    '<span class="sentence-number">第 ' + (index + 1) + ' 句</span>' +
+                    renderSentenceAudioButton(lesson.id, index) +
+                '</div>' +
             '</div>' +
             '<div class="dictation-chinese-text">' + chinese + '</div>' +
             '<div class="dictation-input-wrapper">' +
@@ -1082,6 +1326,7 @@ function startQuickChallenge(type) {
                     lessonId: lesson.id,
                     lessonNumber: lesson.lessonNumber,
                     lessonTitle: lesson.title,
+                    sentenceIndex: index,
                     chinese: chinese,
                     english: englishTexts[index]
                 });
@@ -1133,6 +1378,7 @@ function startRandomChallenge() {
                         lessonId: lesson.id,
                         lessonNumber: lesson.lessonNumber,
                         lessonTitle: lesson.title,
+                        sentenceIndex: index,
                         chinese: chinese,
                         english: englishTexts[index]
                     });
@@ -1158,8 +1404,11 @@ function renderRandomChallenge(type) {
         container.innerHTML = randomChallengeQuestions.map((q, index) => {
             return '<div class="dictation-sentence-item" data-index="' + index + '">' +
                 '<div class="dictation-sentence-header">' +
-                    '<span class="sentence-number">第 ' + (index + 1) + ' 题</span>' +
-                    '<span class="sentence-source">（Lesson ' + q.lessonNumber + '）</span>' +
+                    '<div class="sentence-header-left">' +
+                        '<span class="sentence-number">第 ' + (index + 1) + ' 题</span>' +
+                        '<span class="sentence-source">（Lesson ' + q.lessonNumber + '）</span>' +
+                        renderSentenceAudioButton(q.lessonId, q.sentenceIndex) +
+                    '</div>' +
                 '</div>' +
                 '<div class="dictation-chinese-text">' + q.chinese + '</div>' +
                 '<div class="dictation-input-wrapper">' +
@@ -1174,9 +1423,10 @@ function renderRandomChallenge(type) {
         '<div class="translation-sentences-container">' + randomChallengeQuestions.map((q, index) => {
             return '<div class="translation-sentence-item" data-index="' + index + '">' +
                 '<div class="translation-sentence-header">' +
-                    '<div>' +
+                    '<div class="sentence-header-left">' +
                         '<span class="sentence-number">第 ' + (index + 1) + ' 题</span>' +
                         '<span class="sentence-source">（Lesson ' + q.lessonNumber + '）</span>' +
+                        renderSentenceAudioButton(q.lessonId, q.sentenceIndex) +
                     '</div>' +
                     '<label class="translation-toggle">' +
                         '<input type="checkbox" id="random-toggle-' + index + '" onchange="toggleRandomTranslation(' + index + ')">' +
@@ -1558,9 +1808,13 @@ function initMistakesChallengePage() {
     }
     
     container.innerHTML = mistakesChallengeQuestions.map((mistake, index) => {
+        const sentenceIndex = findLessonSentenceIndex(mistake.lessonId, mistake.correctAnswer);
         return '<div class="dictation-sentence-item" data-index="' + index + '">' +
             '<div class="dictation-sentence-header">' +
-                '<span class="sentence-number">第 ' + (index + 1) + ' 题</span>' +
+                '<div class="sentence-header-left">' +
+                    '<span class="sentence-number">第 ' + (index + 1) + ' 题</span>' +
+                    renderSentenceAudioButton(mistake.lessonId, sentenceIndex) +
+                '</div>' +
             '</div>' +
             '<div class="dictation-chinese-text">' + mistake.chinese + '</div>' +
             '<div class="dictation-input-wrapper">' +
