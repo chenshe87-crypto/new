@@ -52,7 +52,8 @@ const audioFormat = args.get('format') || defaults.format;
 const extension = args.get('extension') || audioFormat;
 const sampleRate = Number(args.get('sample-rate') || defaults.sampleRate || 24000);
 const normalRate = Number(args.get('normal-rate') || 1);
-const slowRate = Number(args.get('slow-rate') || 0.5);
+const slowRate = Number(args.get('slow-rate') || 0.75);
+const generateSlow = args.get('generate-slow') === 'true';
 const instruction = args.get('instruction') || '';
 const overwrite = args.get('overwrite') === 'true';
 const quietSkip = args.get('quiet-skip') === 'true';
@@ -79,6 +80,8 @@ if (!apiKey && !manifestOnly) {
     console.error('DASHSCOPE_API_KEY is required to generate speech files.');
     process.exit(1);
 }
+
+const speechVariants = generateSlow ? ['normal', 'slow'] : ['normal'];
 
 function pad(num, size = 3) {
     return String(num).padStart(size, '0');
@@ -273,7 +276,7 @@ async function generateLesson(lesson) {
         const sentence = englishTexts[index];
         const sentenceNumber = pad(index + 1);
 
-        for (const variant of ['normal', 'slow']) {
+        for (const variant of speechVariants) {
             const filePath = path.join(lessonDir, `sentence-${sentenceNumber}-${variant}.${extension}`);
 
             if (!overwrite) {

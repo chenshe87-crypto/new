@@ -416,13 +416,13 @@ function getGeneratedSentenceAudio(lessonId, sentenceIndex, playbackRate) {
     const sentenceAudio = lessonAudio[sentenceIndex];
     if (!sentenceAudio) return null;
 
-    const wantsSlow = (playbackRate || 1) < 0.75;
-    const src = wantsSlow ? (sentenceAudio.slow || sentenceAudio.normal) : (sentenceAudio.normal || sentenceAudio.slow);
+    const wantsSlow = (playbackRate || 1) < 1;
+    const src = sentenceAudio.normal || sentenceAudio.slow;
     if (!src) return null;
 
     return {
         src,
-        playbackRate: wantsSlow && !sentenceAudio.slow ? 0.5 : 1
+        playbackRate: wantsSlow && sentenceAudio.normal ? 0.75 : 1
     };
 }
 
@@ -430,11 +430,13 @@ function renderSentenceAudioButton(lessonId, sentenceIndex) {
     if (!getSentenceAudioSegment(lessonId, sentenceIndex) && !getSentenceTextForSpeech(lessonId, sentenceIndex)) return '';
 
     return '<span class="sentence-audio-actions" aria-label="逐句播放">' +
-        '<button type="button" class="sentence-audio-btn sentence-audio-btn-slow" title="0.5 倍速播放本句美音" aria-label="0.5 倍速播放本句美音" onclick="playSentenceAudio(\'' + lessonId + '\', ' + sentenceIndex + ', 0.5, this)">' +
-            '<i class="fas fa-volume-down"></i>' +
+        '<button type="button" class="sentence-audio-btn sentence-audio-btn-slow" title="0.75 倍速播放本句美音" aria-label="0.75 倍速播放本句美音" onclick="playSentenceAudio(\'' + lessonId + '\', ' + sentenceIndex + ', 0.75, this)">' +
+            '<i class="fas fa-volume-low" aria-hidden="true"></i>' +
+            '<span class="sentence-audio-speed">0.75x</span>' +
         '</button>' +
         '<button type="button" class="sentence-audio-btn" title="常速播放本句美音" aria-label="常速播放本句美音" onclick="playSentenceAudio(\'' + lessonId + '\', ' + sentenceIndex + ', 1, this)">' +
-            '<i class="fas fa-volume-up"></i>' +
+            '<i class="fas fa-volume-high" aria-hidden="true"></i>' +
+            '<span class="sentence-audio-speed">1x</span>' +
         '</button>' +
     '</span>';
 }
@@ -505,6 +507,9 @@ function playGeneratedSentenceAudio(generatedAudio, button) {
     stopSentenceAudio();
     sentenceAudioPlayer.src = generatedAudio.src;
     sentenceAudioPlayer.playbackRate = generatedAudio.playbackRate;
+    sentenceAudioPlayer.preservesPitch = true;
+    sentenceAudioPlayer.mozPreservesPitch = true;
+    sentenceAudioPlayer.webkitPreservesPitch = true;
     sentenceAudioPlayer.onended = stopSentenceAudio;
 
     if (button) {
@@ -515,6 +520,12 @@ function playGeneratedSentenceAudio(generatedAudio, button) {
         stopSentenceAudio();
         alert('AI 语音暂时无法播放，请稍后再试。');
     });
+}
+
+function getSentenceAudioStopOffset() {
+    const isDesktopPointer = typeof window.matchMedia === 'function' &&
+        window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    return isDesktopPointer ? -0.26 : 0.04;
 }
 
 function playSentenceAudio(lessonId, sentenceIndex, playbackRate, button) {
@@ -542,6 +553,9 @@ function playSentenceAudio(lessonId, sentenceIndex, playbackRate, button) {
     stopSentenceAudio();
     sentenceAudioPlayer.src = audio.mp3;
     sentenceAudioPlayer.playbackRate = playbackRate || 1;
+    sentenceAudioPlayer.preservesPitch = true;
+    sentenceAudioPlayer.mozPreservesPitch = true;
+    sentenceAudioPlayer.webkitPreservesPitch = true;
     sentenceAudioPlayer.ontimeupdate = () => {
         const activeSegment = sentenceAudioPlayer._activeSegment;
         if (activeSegment && sentenceAudioPlayer.currentTime >= activeSegment.end) {
@@ -570,7 +584,7 @@ function playSentenceAudio(lessonId, sentenceIndex, playbackRate, button) {
 
         const rate = sentenceAudioPlayer.playbackRate || 1;
         const wallClockDuration = (resolvedSegment.end - resolvedSegment.start) / rate;
-        sentenceAudioStopTimer = setTimeout(stopSentenceAudio, Math.max(1, wallClockDuration + 0.35) * 1000);
+        sentenceAudioStopTimer = setTimeout(stopSentenceAudio, Math.max(0.1, wallClockDuration + getSentenceAudioStopOffset()) * 1000);
     };
 
     if (segment) {

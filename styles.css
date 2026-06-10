@@ -410,23 +410,37 @@ body {
 .sentence-audio-actions {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.45rem;
     flex: 0 0 auto;
 }
 
 .sentence-audio-btn {
-    width: 2rem;
+    min-width: 4.2rem;
     height: 2rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0.28rem;
     border: 1px solid rgba(249, 115, 22, 0.22);
-    border-radius: 999px;
+    border-radius: 1rem;
     background: rgba(249, 115, 22, 0.1);
     color: #9a3412;
     cursor: pointer;
     transition: all 0.2s;
     flex: 0 0 auto;
+    padding: 0 0.58rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.sentence-audio-btn i {
+    font-size: 0.82rem;
+}
+
+.sentence-audio-speed {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
 }
 
 .sentence-audio-btn-slow {
