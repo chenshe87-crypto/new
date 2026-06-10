@@ -350,12 +350,13 @@ function getNce1AudioRange(lessonNumber) {
 }
 
 function getLessonAudio(bookId, lessonNumber) {
-    if (bookId !== 1 || lessonNumber < 1 || lessonNumber > 144 || lessonNumber % 2 === 0) return null;
+    if (bookId !== 1 || lessonNumber < 1 || lessonNumber > 144) return null;
+    if (lessonNumber % 2 === 0) return null;
 
     const range = getNce1AudioRange(lessonNumber);
     const basePath = 'assets/audio/nce1-us/lesson-' + range.start + '-' + range.end;
     return {
-        label: 'Lesson ' + range.start + ' 美音',
+        label: 'Lesson ' + parseInt(range.start, 10) + ' 美音',
         mp3: basePath + '.mp3',
         lrc: basePath + '.lrc'
     };
@@ -364,15 +365,19 @@ function getLessonAudio(bookId, lessonNumber) {
 function renderAudioPlayer(audio) {
     if (!audio) return '';
 
+    const lyricsLink = audio.lrc
+        ? '<a class="audio-lyrics-link" href="' + audio.lrc + '" download>' +
+            '<i class="fas fa-align-left"></i> LRC' +
+        '</a>'
+        : '';
+
     return '<div class="audio-panel">' +
         '<div class="audio-panel-header">' +
             '<div>' +
                 '<div class="audio-label"><i class="fas fa-volume-up"></i> 美音朗读</div>' +
                 '<div class="audio-title">' + audio.label + '</div>' +
             '</div>' +
-            '<a class="audio-lyrics-link" href="' + audio.lrc + '" download>' +
-                '<i class="fas fa-align-left"></i> LRC' +
-            '</a>' +
+            lyricsLink +
         '</div>' +
         '<audio class="lesson-audio" controls preload="metadata" src="' + audio.mp3 + '">' +
             '当前浏览器不支持音频播放。' +
@@ -382,6 +387,7 @@ function renderAudioPlayer(audio) {
 
 let sentenceAudioPlayer = null;
 let sentenceAudioStopTimer = null;
+let speechVoiceCache = null;
 
 function getSentenceAudioSegment(lessonId, sentenceIndex) {
     if (typeof nce1SentenceAudio === 'undefined') return null;
@@ -389,12 +395,48 @@ function getSentenceAudioSegment(lessonId, sentenceIndex) {
     return nce1SentenceAudio[lessonId][sentenceIndex] || null;
 }
 
-function renderSentenceAudioButton(lessonId, sentenceIndex) {
-    if (!getSentenceAudioSegment(lessonId, sentenceIndex)) return '';
+function getSentenceTextForSpeech(lessonId, sentenceIndex) {
+    const lesson = lessons.find(l => l.id === lessonId);
+    if (!lesson) return null;
 
-    return '<button type="button" class="sentence-audio-btn" title="播放本句美音" aria-label="播放本句美音" onclick="playSentenceAudio(\'' + lessonId + '\', ' + sentenceIndex + ', this)">' +
-        '<i class="fas fa-volume-up"></i>' +
-    '</button>';
+    const englishTexts = Array.isArray(lesson.englishText) ? lesson.englishText : [lesson.englishText];
+    if (sentenceIndex < 0 || sentenceIndex >= englishTexts.length) return null;
+
+    return englishTexts[sentenceIndex] || null;
+}
+
+function getGeneratedSentenceAudio(lessonId, sentenceIndex, playbackRate) {
+    const generatedAudioMap = window.nce1GeneratedSentenceAudio ||
+        (typeof nce1GeneratedSentenceAudio !== 'undefined' ? nce1GeneratedSentenceAudio : null);
+    if (!generatedAudioMap) return null;
+
+    const lessonAudio = generatedAudioMap[lessonId];
+    if (!lessonAudio) return null;
+
+    const sentenceAudio = lessonAudio[sentenceIndex];
+    if (!sentenceAudio) return null;
+
+    const wantsSlow = (playbackRate || 1) < 0.75;
+    const src = wantsSlow ? (sentenceAudio.slow || sentenceAudio.normal) : (sentenceAudio.normal || sentenceAudio.slow);
+    if (!src) return null;
+
+    return {
+        src,
+        playbackRate: wantsSlow && !sentenceAudio.slow ? 0.5 : 1
+    };
+}
+
+function renderSentenceAudioButton(lessonId, sentenceIndex) {
+    if (!getSentenceAudioSegment(lessonId, sentenceIndex) && !getSentenceTextForSpeech(lessonId, sentenceIndex)) return '';
+
+    return '<span class="sentence-audio-actions" aria-label="逐句播放">' +
+        '<button type="button" class="sentence-audio-btn sentence-audio-btn-slow" title="0.5 倍速播放本句美音" aria-label="0.5 倍速播放本句美音" onclick="playSentenceAudio(\'' + lessonId + '\', ' + sentenceIndex + ', 0.5, this)">' +
+            '<i class="fas fa-volume-down"></i>' +
+        '</button>' +
+        '<button type="button" class="sentence-audio-btn" title="常速播放本句美音" aria-label="常速播放本句美音" onclick="playSentenceAudio(\'' + lessonId + '\', ' + sentenceIndex + ', 1, this)">' +
+            '<i class="fas fa-volume-up"></i>' +
+        '</button>' +
+    '</span>';
 }
 
 function clearSentenceAudioState() {
@@ -409,18 +451,89 @@ function clearSentenceAudioState() {
 
 function stopSentenceAudio() {
     clearSentenceAudioState();
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+    }
     if (sentenceAudioPlayer) {
         sentenceAudioPlayer.pause();
+        sentenceAudioPlayer.onloadedmetadata = null;
         sentenceAudioPlayer.ontimeupdate = null;
         sentenceAudioPlayer.onended = null;
+        sentenceAudioPlayer._activeSegment = null;
     }
 }
 
-function playSentenceAudio(lessonId, sentenceIndex, button) {
+function getPreferredEnglishVoice() {
+    if (!('speechSynthesis' in window)) return null;
+    if (speechVoiceCache) return speechVoiceCache;
+
+    const voices = window.speechSynthesis.getVoices();
+    speechVoiceCache = voices.find(voice => /^en[-_]?US/i.test(voice.lang)) ||
+        voices.find(voice => /^en/i.test(voice.lang)) ||
+        null;
+    return speechVoiceCache;
+}
+
+function speakSentenceText(text, playbackRate, button) {
+    if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
+        alert('当前浏览器不支持文字朗读。');
+        return;
+    }
+
+    stopSentenceAudio();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = playbackRate || 1;
+    utterance.pitch = 1;
+    utterance.voice = getPreferredEnglishVoice();
+    utterance.onend = stopSentenceAudio;
+    utterance.onerror = stopSentenceAudio;
+
+    if (button) {
+        button.classList.add('is-playing');
+    }
+
+    window.speechSynthesis.speak(utterance);
+}
+
+function playGeneratedSentenceAudio(generatedAudio, button) {
+    if (!sentenceAudioPlayer) {
+        sentenceAudioPlayer = new Audio();
+    }
+
+    stopSentenceAudio();
+    sentenceAudioPlayer.src = generatedAudio.src;
+    sentenceAudioPlayer.playbackRate = generatedAudio.playbackRate;
+    sentenceAudioPlayer.onended = stopSentenceAudio;
+
+    if (button) {
+        button.classList.add('is-playing');
+    }
+
+    sentenceAudioPlayer.play().catch(() => {
+        stopSentenceAudio();
+        alert('AI 语音暂时无法播放，请稍后再试。');
+    });
+}
+
+function playSentenceAudio(lessonId, sentenceIndex, playbackRate, button) {
     const lesson = lessons.find(l => l.id === lessonId);
+    const generatedAudio = getGeneratedSentenceAudio(lessonId, sentenceIndex, playbackRate);
     const segment = getSentenceAudioSegment(lessonId, sentenceIndex);
     const audio = lesson ? getLessonAudio(lesson.bookId, lesson.lessonNumber) : null;
-    if (!lesson || !segment || !audio) return;
+    const speechText = getSentenceTextForSpeech(lessonId, sentenceIndex);
+    if (!lesson || (!generatedAudio && !segment && !speechText)) return;
+
+    if (generatedAudio) {
+        playGeneratedSentenceAudio(generatedAudio, button);
+        return;
+    }
+
+    if (!segment || !audio) {
+        speakSentenceText(speechText, playbackRate, button);
+        return;
+    }
 
     if (!sentenceAudioPlayer) {
         sentenceAudioPlayer = new Audio();
@@ -428,9 +541,10 @@ function playSentenceAudio(lessonId, sentenceIndex, button) {
 
     stopSentenceAudio();
     sentenceAudioPlayer.src = audio.mp3;
-    sentenceAudioPlayer.currentTime = segment.start;
+    sentenceAudioPlayer.playbackRate = playbackRate || 1;
     sentenceAudioPlayer.ontimeupdate = () => {
-        if (sentenceAudioPlayer.currentTime >= segment.end) {
+        const activeSegment = sentenceAudioPlayer._activeSegment;
+        if (activeSegment && sentenceAudioPlayer.currentTime >= activeSegment.end) {
             stopSentenceAudio();
         }
     };
@@ -440,12 +554,29 @@ function playSentenceAudio(lessonId, sentenceIndex, button) {
         button.classList.add('is-playing');
     }
 
-    sentenceAudioPlayer.play().catch(() => {
-        stopSentenceAudio();
-        alert('音频暂时无法播放，请稍后再试。');
-    });
+    const playResolvedSegment = (resolvedSegment) => {
+        if (!resolvedSegment || resolvedSegment.end <= resolvedSegment.start) {
+            stopSentenceAudio();
+            alert('这句音频暂时无法定位，请稍后再试。');
+            return;
+        }
 
-    sentenceAudioStopTimer = setTimeout(stopSentenceAudio, Math.max(1, segment.end - segment.start + 0.25) * 1000);
+        sentenceAudioPlayer._activeSegment = resolvedSegment;
+        sentenceAudioPlayer.currentTime = resolvedSegment.start;
+        sentenceAudioPlayer.play().catch(() => {
+            stopSentenceAudio();
+            alert('音频暂时无法播放，请稍后再试。');
+        });
+
+        const rate = sentenceAudioPlayer.playbackRate || 1;
+        const wallClockDuration = (resolvedSegment.end - resolvedSegment.start) / rate;
+        sentenceAudioStopTimer = setTimeout(stopSentenceAudio, Math.max(1, wallClockDuration + 0.35) * 1000);
+    };
+
+    if (segment) {
+        playResolvedSegment(segment);
+        return;
+    }
 }
 
 function findLessonSentenceIndex(lessonId, englishText) {
@@ -689,13 +820,11 @@ function showLessonDetail(lessonId) {
     
     const englishTexts = Array.isArray(lesson.englishText) ? lesson.englishText : [lesson.englishText];
     const chineseTexts = Array.isArray(lesson.chineseText) ? lesson.chineseText : [lesson.chineseText];
-    const studyText = Array.isArray(lesson.studyText) ? lesson.studyText : [];
     
-    const englishText = englishTexts.join(' ');
-    const chineseText = chineseTexts.join(' ');
-    const lessonTextHtml = studyText.length
-        ? renderStudyText(studyText)
-        : '<div class="text-block">' +
+    const englishText = englishTexts.map(escapeHtml).join(' ');
+    const chineseText = chineseTexts.map(escapeHtml).join(' ');
+    const lessonTextHtml =
+        '<div class="text-block">' +
             '<h3><i class="fas fa-language"></i> 英文原文</h3>' +
             '<div class="text-content en">' + englishText + '</div>' +
         '</div>' +
