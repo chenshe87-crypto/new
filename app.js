@@ -379,7 +379,7 @@ function renderAudioPlayer(audio) {
             '</div>' +
             lyricsLink +
         '</div>' +
-        '<audio class="lesson-audio" controls preload="metadata" src="' + audio.mp3 + '">' +
+        '<audio class="lesson-audio" controls preload="none" playsinline webkit-playsinline src="' + audio.mp3 + '">' +
             '当前浏览器不支持音频播放。' +
         '</audio>' +
     '</div>';
@@ -387,7 +387,42 @@ function renderAudioPlayer(audio) {
 
 let sentenceAudioPlayer = null;
 let sentenceAudioStopTimer = null;
+let sentenceAudioPlayToken = 0;
 let speechVoiceCache = null;
+const SENTENCE_AUDIO_MAX_RETRIES = 2;
+
+function bindLessonAudioRecovery(root) {
+    const scope = root || document;
+    scope.querySelectorAll('.lesson-audio').forEach(audio => {
+        if (audio.dataset.recoveryBound === 'true') return;
+        audio.dataset.recoveryBound = 'true';
+        audio.dataset.retryCount = '0';
+        audio.setAttribute('playsinline', '');
+        audio.setAttribute('webkit-playsinline', '');
+
+        const retryLoad = () => {
+            const retryCount = parseInt(audio.dataset.retryCount || '0', 10);
+            if (retryCount >= 1 || !audio.currentSrc && !audio.src) return;
+
+            audio.dataset.retryCount = String(retryCount + 1);
+            const wasPaused = audio.paused;
+            const src = audio.currentSrc || audio.src;
+            setTimeout(() => {
+                audio.src = src;
+                audio.load();
+                if (!wasPaused) {
+                    audio.play().catch(() => {});
+                }
+            }, 250);
+        };
+
+        audio.addEventListener('error', retryLoad);
+        audio.addEventListener('stalled', retryLoad);
+        audio.addEventListener('canplay', () => {
+            audio.dataset.retryCount = '0';
+        });
+    });
+}
 
 function getSentenceAudioSegment(lessonId, sentenceIndex) {
     if (typeof nce1SentenceAudio === 'undefined') return null;
@@ -452,6 +487,7 @@ function clearSentenceAudioState() {
 }
 
 function stopSentenceAudio() {
+    sentenceAudioPlayToken++;
     clearSentenceAudioState();
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -461,6 +497,7 @@ function stopSentenceAudio() {
         sentenceAudioPlayer.onloadedmetadata = null;
         sentenceAudioPlayer.ontimeupdate = null;
         sentenceAudioPlayer.onended = null;
+        sentenceAudioPlayer.onerror = null;
         sentenceAudioPlayer._activeSegment = null;
     }
 }
@@ -499,12 +536,68 @@ function speakSentenceText(text, playbackRate, button) {
     window.speechSynthesis.speak(utterance);
 }
 
-function playGeneratedSentenceAudio(generatedAudio, button) {
+function fallbackToSpeechText(text, playbackRate, button, fallbackMessage) {
+    if (text) {
+        speakSentenceText(text, playbackRate, button);
+        return;
+    }
+
+    alert(fallbackMessage || '音频暂时无法播放，请稍后再试。');
+}
+
+function setSentenceAudioStartTime(startTime) {
+    if (!sentenceAudioPlayer) return;
+    try {
+        sentenceAudioPlayer.currentTime = startTime;
+    } catch (error) {
+        // Some mobile browsers reject seeking until metadata is ready; retry play still helps once loaded.
+    }
+}
+
+function playSentenceAudioWithRetry(options) {
+    const token = options.token;
+
+    const attemptPlay = (retryCount) => {
+        if (!sentenceAudioPlayer || token !== sentenceAudioPlayToken) return;
+
+        sentenceAudioPlayer.play().then(() => {
+            if (token === sentenceAudioPlayToken && options.onStarted) {
+                options.onStarted();
+            }
+        }).catch(() => {
+            if (!sentenceAudioPlayer || token !== sentenceAudioPlayToken) return;
+
+            if (retryCount < SENTENCE_AUDIO_MAX_RETRIES) {
+                setTimeout(() => {
+                    if (!sentenceAudioPlayer || token !== sentenceAudioPlayToken) return;
+                    if (options.resetBeforeRetry) {
+                        options.resetBeforeRetry();
+                    } else {
+                        sentenceAudioPlayer.load();
+                    }
+                    attemptPlay(retryCount + 1);
+                }, 220 * (retryCount + 1));
+                return;
+            }
+
+            stopSentenceAudio();
+            if (options.onFailure) {
+                options.onFailure();
+            }
+        });
+    };
+
+    attemptPlay(0);
+}
+
+function playGeneratedSentenceAudio(generatedAudio, button, speechText, requestedPlaybackRate) {
     if (!sentenceAudioPlayer) {
         sentenceAudioPlayer = new Audio();
     }
 
     stopSentenceAudio();
+    const playToken = ++sentenceAudioPlayToken;
+    sentenceAudioPlayer.preload = 'auto';
     sentenceAudioPlayer.src = generatedAudio.src;
     sentenceAudioPlayer.playbackRate = generatedAudio.playbackRate;
     sentenceAudioPlayer.preservesPitch = true;
@@ -516,9 +609,15 @@ function playGeneratedSentenceAudio(generatedAudio, button) {
         button.classList.add('is-playing');
     }
 
-    sentenceAudioPlayer.play().catch(() => {
-        stopSentenceAudio();
-        alert('AI 语音暂时无法播放，请稍后再试。');
+    playSentenceAudioWithRetry({
+        token: playToken,
+        resetBeforeRetry: () => {
+            sentenceAudioPlayer.currentTime = 0;
+            sentenceAudioPlayer.load();
+        },
+        onFailure: () => {
+            fallbackToSpeechText(speechText, requestedPlaybackRate, button, 'AI 语音暂时无法播放，请稍后再试。');
+        }
     });
 }
 
@@ -537,7 +636,7 @@ function playSentenceAudio(lessonId, sentenceIndex, playbackRate, button) {
     if (!lesson || (!generatedAudio && !segment && !speechText)) return;
 
     if (generatedAudio) {
-        playGeneratedSentenceAudio(generatedAudio, button);
+        playGeneratedSentenceAudio(generatedAudio, button, speechText, playbackRate);
         return;
     }
 
@@ -551,6 +650,8 @@ function playSentenceAudio(lessonId, sentenceIndex, playbackRate, button) {
     }
 
     stopSentenceAudio();
+    const playToken = ++sentenceAudioPlayToken;
+    sentenceAudioPlayer.preload = 'auto';
     sentenceAudioPlayer.src = audio.mp3;
     sentenceAudioPlayer.playbackRate = playbackRate || 1;
     sentenceAudioPlayer.preservesPitch = true;
@@ -576,15 +677,23 @@ function playSentenceAudio(lessonId, sentenceIndex, playbackRate, button) {
         }
 
         sentenceAudioPlayer._activeSegment = resolvedSegment;
-        sentenceAudioPlayer.currentTime = resolvedSegment.start;
-        sentenceAudioPlayer.play().catch(() => {
-            stopSentenceAudio();
-            alert('音频暂时无法播放，请稍后再试。');
-        });
+        setSentenceAudioStartTime(resolvedSegment.start);
 
-        const rate = sentenceAudioPlayer.playbackRate || 1;
-        const wallClockDuration = (resolvedSegment.end - resolvedSegment.start) / rate;
-        sentenceAudioStopTimer = setTimeout(stopSentenceAudio, Math.max(0.1, wallClockDuration + getSentenceAudioStopOffset()) * 1000);
+        playSentenceAudioWithRetry({
+            token: playToken,
+            resetBeforeRetry: () => {
+                sentenceAudioPlayer.load();
+                setSentenceAudioStartTime(resolvedSegment.start);
+            },
+            onStarted: () => {
+                const rate = sentenceAudioPlayer.playbackRate || 1;
+                const wallClockDuration = (resolvedSegment.end - resolvedSegment.start) / rate;
+                sentenceAudioStopTimer = setTimeout(stopSentenceAudio, Math.max(0.1, wallClockDuration + getSentenceAudioStopOffset()) * 1000);
+            },
+            onFailure: () => {
+                fallbackToSpeechText(speechText, playbackRate, button, '音频暂时无法播放，请稍后再试。');
+            }
+        });
     };
 
     if (segment) {
@@ -782,6 +891,7 @@ function showAudioOnlyLesson(bookId, lessonNumber) {
             '<i class="fas fa-headphones"></i>' +
             '<p>这课暂未录入课文文本，可以先用本地美音音频跟读和听写。</p>' +
         '</div>';
+    bindLessonAudioRecovery(lessonDetail);
 
     if (window.innerWidth < 900) {
         setTimeout(() => {
@@ -797,6 +907,12 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+const ENGLISH_INPUT_ATTRIBUTES = ' lang="en" inputmode="text" autocorrect="off" autocapitalize="none" autocomplete="off" spellcheck="false"';
+
+function renderEnglishAnswerInput(id, placeholder) {
+    return '<input type="text" class="dictation-input" id="' + id + '" placeholder="' + escapeHtml(placeholder) + '"' + ENGLISH_INPUT_ATTRIBUTES + '>';
 }
 
 function renderStudyText(lines) {
@@ -865,6 +981,7 @@ function showLessonDetail(lessonId) {
                 '<i class="fas fa-pencil-alt"></i> 默写挑战' +
             '</button>' +
         '</div>';
+    bindLessonAudioRecovery(lessonDetail);
     
     if (window.innerWidth < 900) {
         setTimeout(() => {
@@ -1081,7 +1198,7 @@ function initDictationPage(lessonId) {
             '</div>' +
             '<div class="dictation-chinese-text">' + chinese + '</div>' +
             '<div class="dictation-input-wrapper">' +
-                '<input type="text" class="dictation-input" id="dictation-' + index + '" placeholder="请输入对应的英文句子...">' +
+                renderEnglishAnswerInput('dictation-' + index, '请输入对应的英文句子...') +
             '</div>' +
         '</div>';
     }).join('');
@@ -1089,33 +1206,63 @@ function initDictationPage(lessonId) {
     document.getElementById('dictation-result').classList.add('hidden');
 }
 
+function normalizeAnswerCharacters(str) {
+    const rawText = String(str || '');
+    const normalizedText = typeof rawText.normalize === 'function' ? rawText.normalize('NFKC') : rawText;
+
+    return normalizedText
+        .replace(/&rsquo;|&lsquo;|&apos;|&#39;|&#x27;|&#8217;/gi, "'")
+        .replace(/[‘’‛`´]/g, "'")
+        .replace(/[“”]/g, '"')
+        .replace(/\u00a0/g, ' ');
+}
+
 function removeIgnoredPunctuation(str) {
-    return str.replace(/[^a-zA-Z0-9\s']/g, '').trim();
+    return normalizeAnswerCharacters(str)
+        .replace(/[^a-zA-Z0-9\s']/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
 }
 
 const CONTRACTION_MAP = {
-    "here's": "here is", "there's": "there is", "it's": "it is",
+    "here's": "here is", "there's": "there is", "there're": "there are",
+    "it's": "it is", "it'll": "it will", "that'll": "that will",
     "that's": "that is", "what's": "what is", "he's": "he is",
     "she's": "she is", "who's": "who is", "where's": "where is",
-    "how's": "how is", "i'm": "i am", "you're": "you are",
+    "when's": "when is", "how's": "how is", "colour's": "colour is",
+    "weather's": "weather is", "everyone's": "everyone is",
+    "everything's": "everything is", "i'm": "i am", "you're": "you are",
     "we're": "we are", "they're": "they are", "isn't": "is not",
     "aren't": "are not", "don't": "do not", "doesn't": "does not",
     "can't": "can not", "won't": "will not", "didn't": "did not",
     "wasn't": "was not", "weren't": "were not", "haven't": "have not",
     "hasn't": "has not", "hadn't": "had not", "couldn't": "could not",
     "wouldn't": "would not", "shouldn't": "should not", "mustn't": "must not",
+    "shan't": "shall not",
     "let's": "let us", "i'll": "i will", "you'll": "you will",
     "he'll": "he will", "she'll": "she will", "we'll": "we will",
     "they'll": "they will", "i'd": "i would", "i've": "i have",
-    "you've": "you have", "we've": "we have", "they've": "they have"
+    "you'd": "you would", "you've": "you have", "we've": "we have",
+    "they've": "they have", "o'clock": "o clock"
 };
 
+const ANSWER_PHRASE_EQUIVALENTS = {
+    "cannot": "can not"
+};
+
+function escapeRegex(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 const CONTRACTION_KEYS_SORTED = Object.keys(CONTRACTION_MAP).sort((a, b) => b.length - a.length);
-const CONTRACTION_REGEX = new RegExp('\\b(' + CONTRACTION_KEYS_SORTED.join('|') + ')\\b', 'g');
+const CONTRACTION_REGEX = new RegExp('\\b(' + CONTRACTION_KEYS_SORTED.map(escapeRegex).join('|') + ')\\b', 'g');
+const ANSWER_PHRASE_REGEX = new RegExp('\\b(' + Object.keys(ANSWER_PHRASE_EQUIVALENTS).map(escapeRegex).join('|') + ')\\b', 'g');
 
 function normalizeText(str) {
     let text = removeIgnoredPunctuation(str).toLowerCase();
-    return text.replace(CONTRACTION_REGEX, match => CONTRACTION_MAP[match]);
+    text = text.replace(CONTRACTION_REGEX, match => CONTRACTION_MAP[match]);
+    text = text.replace(ANSWER_PHRASE_REGEX, match => ANSWER_PHRASE_EQUIVALENTS[match]);
+    return text.replace(/\s+/g, ' ').trim();
 }
 
 function wordsMatch(str1, str2) {
@@ -1349,6 +1496,14 @@ function initRandomPage() {
     
     const book = books[0];
     const bookLessons = lessons.filter(l => l.bookId === book.id);
+    const maxLessonNumber = Math.max(...bookLessons.map(l => l.lessonNumber));
+
+    ['rangeStart', 'rangeEnd'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.max = String(maxLessonNumber);
+        }
+    });
     
     const savedSelection = JSON.parse(localStorage.getItem('randomLessonSelection') || 'null');
     const defaultChecked = savedSelection ? savedSelection : bookLessons.map(l => l.id);
@@ -1399,6 +1554,9 @@ function setSentenceCount(count) {
 function selectRangeLessons() {
     const start = parseInt(document.getElementById('rangeStart').value);
     const end = parseInt(document.getElementById('rangeEnd').value);
+    const book = books[0];
+    const bookLessons = lessons.filter(l => l.bookId === book.id);
+    const maxLessonNumber = Math.max(...bookLessons.map(l => l.lessonNumber));
     
     if (isNaN(start) || isNaN(end)) {
         alert('请输入有效的数字范围');
@@ -1410,19 +1568,15 @@ function selectRangeLessons() {
         return;
     }
     
-    if (start < 1 || end > 50) {
-        alert('范围必须在 1-50 之间');
+    if (start < 1 || end > maxLessonNumber) {
+        alert('范围必须在 1-' + maxLessonNumber + ' 之间');
         return;
     }
     
     deselectAllLessons();
-    
-    const book = books[0];
-    const bookLessons = lessons.filter(l => l.bookId === book.id);
-    
-    bookLessons.forEach((lesson, index) => {
-        const lessonNum = index + 1;
-        if (lessonNum >= start && lessonNum <= end) {
+
+    bookLessons.forEach(lesson => {
+        if (lesson.lessonNumber >= start && lesson.lessonNumber <= end) {
             const checkbox = document.getElementById('select-' + lesson.id);
             if (checkbox) {
                 checkbox.checked = true;
@@ -1441,7 +1595,8 @@ function startQuickChallenge(type) {
     
     if (selectedLessonIds.length === 0) {
         const bookLessons = lessons.filter(l => l.bookId === book.id);
-        const shuffled = [...bookLessons].sort(() => Math.random() - 0.5);
+        const shuffled = [...bookLessons];
+        shuffleArray(shuffled);
         selectedLessonIds = shuffled.slice(0, Math.min(5, shuffled.length)).map(l => l.id);
     }
     
@@ -1555,7 +1710,7 @@ function renderRandomChallenge(type) {
                 '</div>' +
                 '<div class="dictation-chinese-text">' + q.chinese + '</div>' +
                 '<div class="dictation-input-wrapper">' +
-                    '<input type="text" class="dictation-input" id="random-' + index + '" placeholder="请输入对应的英文句子...">' +
+                    renderEnglishAnswerInput('random-' + index, '请输入对应的英文句子...') +
                 '</div>' +
             '</div>';
         }).join('');
@@ -1930,7 +2085,8 @@ function startMistakesChallenge() {
         return;
     }
     
-    const shuffled = [...allMistakes].sort(() => Math.random() - 0.5);
+    const shuffled = [...allMistakes];
+    shuffleArray(shuffled);
     mistakesChallengeQuestions = shuffled.slice(0, Math.min(5, shuffled.length));
     mistakesChallengeCorrectIds = [];
     
@@ -1961,7 +2117,7 @@ function initMistakesChallengePage() {
             '</div>' +
             '<div class="dictation-chinese-text">' + mistake.chinese + '</div>' +
             '<div class="dictation-input-wrapper">' +
-                '<input type="text" class="dictation-input" id="mistakes-challenge-' + index + '" placeholder="请输入英文翻译">' +
+                renderEnglishAnswerInput('mistakes-challenge-' + index, '请输入英文翻译') +
             '</div>' +
         '</div>';
     }).join('') +
