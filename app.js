@@ -1013,8 +1013,27 @@ function escapeHtml(value) {
 
 const ENGLISH_INPUT_ATTRIBUTES = ' lang="en" inputmode="text" autocorrect="off" autocapitalize="none" autocomplete="off" spellcheck="false"';
 
+function capitalizeEnglishAnswerStart(input) {
+    if (!input || typeof input.value !== 'string') return;
+
+    const value = input.value;
+    const firstLetterIndex = value.search(/[a-z]/);
+    if (firstLetterIndex === -1) return;
+
+    const capitalizedLetter = value.charAt(firstLetterIndex).toUpperCase();
+    if (capitalizedLetter === value.charAt(firstLetterIndex)) return;
+
+    const selectionStart = input.selectionStart;
+    const selectionEnd = input.selectionEnd;
+    input.value = value.slice(0, firstLetterIndex) + capitalizedLetter + value.slice(firstLetterIndex + 1);
+
+    if (typeof selectionStart === 'number' && typeof selectionEnd === 'number') {
+        input.setSelectionRange(selectionStart, selectionEnd);
+    }
+}
+
 function renderEnglishAnswerInput(id, placeholder) {
-    return '<input type="text" class="dictation-input" id="' + id + '" placeholder="' + escapeHtml(placeholder) + '"' + ENGLISH_INPUT_ATTRIBUTES + '>';
+    return '<input type="text" class="dictation-input" id="' + id + '" placeholder="' + escapeHtml(placeholder) + '"' + ENGLISH_INPUT_ATTRIBUTES + ' oninput="capitalizeEnglishAnswerStart(this)">';
 }
 
 function renderStudyText(lines) {
