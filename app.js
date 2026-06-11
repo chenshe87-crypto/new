@@ -40,7 +40,16 @@ function addMistake(mistake) {
 
 document.addEventListener('DOMContentLoaded', function() {
     checkLogin();
-    window.addEventListener('hashchange', handleHashRoute);
+    window.addEventListener('hashchange', () => {
+        stopSentenceAudio();
+        handleHashRoute();
+    });
+    window.addEventListener('pagehide', stopSentenceAudio);
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopSentenceAudio();
+        }
+    });
 });
 
 function checkLogin() {
@@ -385,11 +394,16 @@ function renderAudioPlayer(audio) {
     '</div>';
 }
 
-let sentenceAudioPlayer = null;
-let sentenceAudioStopTimer = null;
-let sentenceAudioPlayToken = 0;
 let speechVoiceCache = null;
-const SENTENCE_AUDIO_MAX_RETRIES = 2;
+const sentenceAudioController = {
+    player: null,
+    token: 0,
+    timer: null,
+    currentButton: null,
+    currentKey: null,
+    cleanup: null,
+    status: 'idle'
+};
 
 function bindLessonAudioRecovery(root) {
     const scope = root || document;
@@ -476,29 +490,59 @@ function renderSentenceAudioButton(lessonId, sentenceIndex) {
     '</span>';
 }
 
-function clearSentenceAudioState() {
-    if (sentenceAudioStopTimer) {
-        clearTimeout(sentenceAudioStopTimer);
-        sentenceAudioStopTimer = null;
+function getSentenceAudioKey(lessonId, sentenceIndex, playbackRate) {
+    return lessonId + ':' + sentenceIndex + ':' + (playbackRate || 1);
+}
+
+function getSentenceAudioPlayer() {
+    if (!sentenceAudioController.player) {
+        sentenceAudioController.player = new Audio();
+        sentenceAudioController.player.preload = 'auto';
+        sentenceAudioController.player.setAttribute('playsinline', '');
+        sentenceAudioController.player.setAttribute('webkit-playsinline', '');
     }
-    document.querySelectorAll('.sentence-audio-btn.is-playing').forEach(button => {
-        button.classList.remove('is-playing');
+    return sentenceAudioController.player;
+}
+
+function clearSentenceAudioState() {
+    if (sentenceAudioController.timer) {
+        clearTimeout(sentenceAudioController.timer);
+        sentenceAudioController.timer = null;
+    }
+    document.querySelectorAll('.sentence-audio-btn.is-loading, .sentence-audio-btn.is-playing, .sentence-audio-btn.is-error').forEach(button => {
+        button.classList.remove('is-loading', 'is-playing', 'is-error');
     });
+    sentenceAudioController.currentButton = null;
+    sentenceAudioController.currentKey = null;
+    sentenceAudioController.status = 'idle';
+}
+
+function setSentenceAudioButtonState(button, state) {
+    if (!button) return;
+    button.classList.remove('is-loading', 'is-playing', 'is-error');
+    if (state) {
+        button.classList.add(state);
+    }
 }
 
 function stopSentenceAudio() {
-    sentenceAudioPlayToken++;
+    sentenceAudioController.token++;
     clearSentenceAudioState();
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
     }
-    if (sentenceAudioPlayer) {
-        sentenceAudioPlayer.pause();
-        sentenceAudioPlayer.onloadedmetadata = null;
-        sentenceAudioPlayer.ontimeupdate = null;
-        sentenceAudioPlayer.onended = null;
-        sentenceAudioPlayer.onerror = null;
-        sentenceAudioPlayer._activeSegment = null;
+
+    if (sentenceAudioController.cleanup) {
+        sentenceAudioController.cleanup();
+        sentenceAudioController.cleanup = null;
+    }
+
+    const player = sentenceAudioController.player;
+    if (player) {
+        player.pause();
+        player.removeAttribute('src');
+        player.load();
+        player._activeSegment = null;
     }
 }
 
@@ -529,9 +573,7 @@ function speakSentenceText(text, playbackRate, button) {
     utterance.onend = stopSentenceAudio;
     utterance.onerror = stopSentenceAudio;
 
-    if (button) {
-        button.classList.add('is-playing');
-    }
+    setSentenceAudioButtonState(button, 'is-playing');
 
     window.speechSynthesis.speak(utterance);
 }
@@ -545,76 +587,153 @@ function fallbackToSpeechText(text, playbackRate, button, fallbackMessage) {
     alert(fallbackMessage || '音频暂时无法播放，请稍后再试。');
 }
 
-function setSentenceAudioStartTime(startTime) {
-    if (!sentenceAudioPlayer) return;
+function setSentenceAudioStartTime(player, startTime) {
+    if (!player) return;
     try {
-        sentenceAudioPlayer.currentTime = startTime;
+        player.currentTime = startTime;
     } catch (error) {
-        // Some mobile browsers reject seeking until metadata is ready; retry play still helps once loaded.
+        // Mobile browsers may reject seeking before metadata is ready; loadedmetadata retries it.
     }
 }
 
-function playSentenceAudioWithRetry(options) {
+function bindSentenceAudioPlayerEvents(player, options) {
     const token = options.token;
+    let started = false;
 
-    const attemptPlay = (retryCount) => {
-        if (!sentenceAudioPlayer || token !== sentenceAudioPlayToken) return;
-
-        sentenceAudioPlayer.play().then(() => {
-            if (token === sentenceAudioPlayToken && options.onStarted) {
-                options.onStarted();
-            }
-        }).catch(() => {
-            if (!sentenceAudioPlayer || token !== sentenceAudioPlayToken) return;
-
-            if (retryCount < SENTENCE_AUDIO_MAX_RETRIES) {
-                setTimeout(() => {
-                    if (!sentenceAudioPlayer || token !== sentenceAudioPlayToken) return;
-                    if (options.resetBeforeRetry) {
-                        options.resetBeforeRetry();
-                    } else {
-                        sentenceAudioPlayer.load();
-                    }
-                    attemptPlay(retryCount + 1);
-                }, 220 * (retryCount + 1));
-                return;
-            }
-
+    const isCurrent = () => token === sentenceAudioController.token;
+    const markLoading = () => {
+        if (!isCurrent() || sentenceAudioController.status === 'playing') return;
+        sentenceAudioController.status = 'loading';
+        setSentenceAudioButtonState(options.button, 'is-loading');
+    };
+    const markPlaying = () => {
+        if (!isCurrent() || started) return;
+        started = true;
+        sentenceAudioController.status = 'playing';
+        setSentenceAudioButtonState(options.button, 'is-playing');
+        if (options.onStarted) {
+            options.onStarted();
+        }
+    };
+    const handleEnded = () => {
+        if (isCurrent()) {
             stopSentenceAudio();
-            if (options.onFailure) {
-                options.onFailure();
-            }
-        });
+        }
+    };
+    const handleError = () => {
+        if (!isCurrent()) return;
+        stopSentenceAudio();
+        setSentenceAudioButtonState(options.button, 'is-error');
+        if (options.onFailure) {
+            options.onFailure();
+        }
+    };
+    const handleMetadata = () => {
+        if (isCurrent() && typeof options.startTime === 'number') {
+            setSentenceAudioStartTime(player, options.startTime);
+        }
+    };
+    const handleTimeUpdate = () => {
+        if (!isCurrent() || !options.segment) return;
+        if (player.currentTime >= options.segment.end) {
+            stopSentenceAudio();
+        }
     };
 
-    attemptPlay(0);
+    const listeners = [
+        ['loadstart', markLoading],
+        ['waiting', markLoading],
+        ['canplay', markLoading],
+        ['playing', markPlaying],
+        ['ended', handleEnded],
+        ['error', handleError],
+        ['loadedmetadata', handleMetadata],
+        ['timeupdate', handleTimeUpdate]
+    ];
+
+    listeners.forEach(([eventName, listener]) => {
+        player.addEventListener(eventName, listener);
+    });
+
+    return () => {
+        listeners.forEach(([eventName, listener]) => {
+            player.removeEventListener(eventName, listener);
+        });
+    };
+}
+
+function handleSentenceAudioPlayFailure(error, options) {
+    if (options.token !== sentenceAudioController.token) return;
+
+    const isNotAllowed = error && error.name === 'NotAllowedError';
+    stopSentenceAudio();
+    setSentenceAudioButtonState(options.button, 'is-error');
+
+    if (isNotAllowed) {
+        alert('浏览器拦截了本次播放，请再点一次播放按钮。');
+        return;
+    }
+
+    if (options.onFailure) {
+        options.onFailure();
+    }
+}
+
+function playSentenceAudioElement(options) {
+    const player = getSentenceAudioPlayer();
+
+    stopSentenceAudio();
+    const playToken = ++sentenceAudioController.token;
+    sentenceAudioController.currentButton = options.button || null;
+    sentenceAudioController.currentKey = options.key;
+    sentenceAudioController.status = 'loading';
+
+    player.preload = 'auto';
+    player.src = options.src;
+    player.playbackRate = options.playbackRate || 1;
+    player.preservesPitch = true;
+    player.mozPreservesPitch = true;
+    player.webkitPreservesPitch = true;
+    player._activeSegment = options.segment || null;
+
+    setSentenceAudioButtonState(options.button, 'is-loading');
+    if (typeof options.startTime === 'number') {
+        setSentenceAudioStartTime(player, options.startTime);
+    }
+
+    sentenceAudioController.cleanup = bindSentenceAudioPlayerEvents(player, {
+        token: playToken,
+        button: options.button,
+        segment: options.segment,
+        startTime: options.startTime,
+        onStarted: options.onStarted,
+        onFailure: options.onFailure
+    });
+
+    const playPromise = player.play();
+    if (playPromise && typeof playPromise.then === 'function') {
+        playPromise.then(() => {
+            if (playToken === sentenceAudioController.token) {
+                sentenceAudioController.status = 'playing';
+                setSentenceAudioButtonState(options.button, 'is-playing');
+            }
+        }).catch(error => {
+            handleSentenceAudioPlayFailure(error, {
+                token: playToken,
+                button: options.button,
+                onFailure: options.onFailure
+            });
+        });
+    }
 }
 
 function playGeneratedSentenceAudio(generatedAudio, button, speechText, requestedPlaybackRate) {
-    if (!sentenceAudioPlayer) {
-        sentenceAudioPlayer = new Audio();
-    }
-
-    stopSentenceAudio();
-    const playToken = ++sentenceAudioPlayToken;
-    sentenceAudioPlayer.preload = 'auto';
-    sentenceAudioPlayer.src = generatedAudio.src;
-    sentenceAudioPlayer.playbackRate = generatedAudio.playbackRate;
-    sentenceAudioPlayer.preservesPitch = true;
-    sentenceAudioPlayer.mozPreservesPitch = true;
-    sentenceAudioPlayer.webkitPreservesPitch = true;
-    sentenceAudioPlayer.onended = stopSentenceAudio;
-
-    if (button) {
-        button.classList.add('is-playing');
-    }
-
-    playSentenceAudioWithRetry({
-        token: playToken,
-        resetBeforeRetry: () => {
-            sentenceAudioPlayer.currentTime = 0;
-            sentenceAudioPlayer.load();
-        },
+    playSentenceAudioElement({
+        key: button ? button.dataset.audioKey : generatedAudio.src + ':' + requestedPlaybackRate,
+        button,
+        src: generatedAudio.src,
+        playbackRate: generatedAudio.playbackRate,
+        startTime: 0,
         onFailure: () => {
             fallbackToSpeechText(speechText, requestedPlaybackRate, button, 'AI 语音暂时无法播放，请稍后再试。');
         }
@@ -628,6 +747,15 @@ function getSentenceAudioStopOffset() {
 }
 
 function playSentenceAudio(lessonId, sentenceIndex, playbackRate, button) {
+    const audioKey = getSentenceAudioKey(lessonId, sentenceIndex, playbackRate);
+    if (button) {
+        button.dataset.audioKey = audioKey;
+    }
+    if (sentenceAudioController.currentKey === audioKey && sentenceAudioController.status !== 'idle') {
+        stopSentenceAudio();
+        return;
+    }
+
     const lesson = lessons.find(l => l.id === lessonId);
     const generatedAudio = getGeneratedSentenceAudio(lessonId, sentenceIndex, playbackRate);
     const segment = getSentenceAudioSegment(lessonId, sentenceIndex);
@@ -645,30 +773,6 @@ function playSentenceAudio(lessonId, sentenceIndex, playbackRate, button) {
         return;
     }
 
-    if (!sentenceAudioPlayer) {
-        sentenceAudioPlayer = new Audio();
-    }
-
-    stopSentenceAudio();
-    const playToken = ++sentenceAudioPlayToken;
-    sentenceAudioPlayer.preload = 'auto';
-    sentenceAudioPlayer.src = audio.mp3;
-    sentenceAudioPlayer.playbackRate = playbackRate || 1;
-    sentenceAudioPlayer.preservesPitch = true;
-    sentenceAudioPlayer.mozPreservesPitch = true;
-    sentenceAudioPlayer.webkitPreservesPitch = true;
-    sentenceAudioPlayer.ontimeupdate = () => {
-        const activeSegment = sentenceAudioPlayer._activeSegment;
-        if (activeSegment && sentenceAudioPlayer.currentTime >= activeSegment.end) {
-            stopSentenceAudio();
-        }
-    };
-    sentenceAudioPlayer.onended = stopSentenceAudio;
-
-    if (button) {
-        button.classList.add('is-playing');
-    }
-
     const playResolvedSegment = (resolvedSegment) => {
         if (!resolvedSegment || resolvedSegment.end <= resolvedSegment.start) {
             stopSentenceAudio();
@@ -676,19 +780,17 @@ function playSentenceAudio(lessonId, sentenceIndex, playbackRate, button) {
             return;
         }
 
-        sentenceAudioPlayer._activeSegment = resolvedSegment;
-        setSentenceAudioStartTime(resolvedSegment.start);
-
-        playSentenceAudioWithRetry({
-            token: playToken,
-            resetBeforeRetry: () => {
-                sentenceAudioPlayer.load();
-                setSentenceAudioStartTime(resolvedSegment.start);
-            },
+        playSentenceAudioElement({
+            key: audioKey,
+            button,
+            src: audio.mp3,
+            playbackRate: playbackRate || 1,
+            segment: resolvedSegment,
+            startTime: resolvedSegment.start,
             onStarted: () => {
-                const rate = sentenceAudioPlayer.playbackRate || 1;
+                const rate = sentenceAudioController.player.playbackRate || 1;
                 const wallClockDuration = (resolvedSegment.end - resolvedSegment.start) / rate;
-                sentenceAudioStopTimer = setTimeout(stopSentenceAudio, Math.max(0.1, wallClockDuration + getSentenceAudioStopOffset()) * 1000);
+                sentenceAudioController.timer = setTimeout(stopSentenceAudio, Math.max(0.1, wallClockDuration + getSentenceAudioStopOffset()) * 1000);
             },
             onFailure: () => {
                 fallbackToSpeechText(speechText, playbackRate, button, '音频暂时无法播放，请稍后再试。');

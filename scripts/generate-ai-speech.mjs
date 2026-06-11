@@ -28,7 +28,7 @@ const engineDefaults = {
         model: 'qwen3-tts-instruct-flash',
         voice: 'Cherry',
         language: 'English',
-        format: 'wav'
+        format: 'mp3'
     },
     cosyvoice: {
         model: 'cosyvoice-v3-flash',
@@ -351,8 +351,7 @@ async function writeManifest(lessons) {
 
 function getFileScore(filePath) {
     const ext = path.extname(filePath).replace('.', '');
-    if (ext === extension) return 3;
-    if (ext === 'mp3') return 2;
+    if (ext === 'mp3') return 3;
     if (ext === 'wav') return 1;
     return 0;
 }
